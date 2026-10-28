@@ -69,25 +69,25 @@ module tt_um_2048 (
     .B(B)
   );
 
-  grid_core u_grid_core(
+  update u_grid_core(
     .clk(clk),
     .rst_n(rst_n), // ACTIVE low Hard Reset
     .s_rst(ui_in[4]), // ACTIVE high soft game reset
 
-    .up(ui_in[0]),
-    .down(ui_in[1]),
-    .left(ui_in[2]),
-    .right(ui_in[3]),
+    .U(ui_in[0]),
+    .D(ui_in[1]),
+    .L(ui_in[2]),
+    .R(ui_in[3]),
 
     .vga_col(vga_col),
     .vga_row(vga_row),
     .grid_value(grid_value),// main playing grid 
 
-    .rand_val(rand_val), //start enable signal for LFSR once all updates and shifting is done
+    .tworfr(rand_val), //start enable signal for LFSR once all updates and shifting is done
     .rand_pos(rand_pos),// random posistion from LFSR
 
-    .game_win(game_win),
-    .game_loss(game_loss)
+    .gamewon(game_win),
+    .game_over_vga(game_loss)
   );
 
   randomizer random(
