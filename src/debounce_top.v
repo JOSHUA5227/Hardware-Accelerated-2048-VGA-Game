@@ -127,7 +127,7 @@ module priority_encoder(
             y = 3'd7;
         end
         else begin
-            y = 3'd0;
+            y = 3'd1;
         end
     end
     
@@ -218,7 +218,7 @@ module debounce_top(
         y = 4'd0;
         if(debounced_out) begin
             case(pr_enc_out)
-                3'd0,3'd1,3'd2,3'd3: s_rst = 1;
+                3'd0: s_rst = 1;
                 3'd4: y = 4'b0001; // up
                 3'd5: y = 4'b0010; // left
                 3'd6: y = 4'b0100; // down

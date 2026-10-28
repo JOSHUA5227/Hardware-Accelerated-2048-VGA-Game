@@ -85,10 +85,10 @@ module tt_um_2048 (
     .rst_n(rst_n), // ACTIVE low Hard Reset
     .s_rst(s_rst), // ACTIVE high soft game reset
 
-    .U(y[0]),
-    .L(y[1]),
+    .U(y[3]),
     .D(y[2]),
-    .R(y[3]),
+    .L(y[1]),
+    .R(y[0]),
 
     .vga_col(vga_col),
     .vga_row(vga_row),
