@@ -56,7 +56,6 @@ module tt_um_2048 (
   );
 
   vga_controller vga_contr (
-    .grid_flat(grid),
     .pix_x(pix_x),
     .pix_y(pix_y),
     .video_active(video_active),

@@ -1,7 +1,6 @@
 `default_nettype none
 
 module vga_controller(
-  input wire [63:0] grid_flat,
   input wire [9:0] pix_x, pix_y,
   input wire video_active, won, lost,
 
