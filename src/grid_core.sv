@@ -5,7 +5,7 @@ input wire s_rst, // ACTIVE high soft game reset
 
 input wire up,down,left,right,
 
-output reg [63:0] grid_flat;
+output reg [63:0] grid_flat,
 
 output reg rand_start, //start enable signal for LFSR once all updates and shifting is done
 input wire [7:0] rand_pos,// random posistion from LFSR
@@ -19,7 +19,7 @@ reg [3:0] cmp_B;
 wire [3:0] alu_res; // Addition result 
 wire Z; // 1 when result is 0
 
-reg [3:0] grid[0:3][0:3], // main playing grid 
+reg [3:0] grid[0:3][0:3];// main playing grid 
 adder u_adder(
 .A(A),
 .B(1'b1),
@@ -368,8 +368,6 @@ begin
       is_updated <= 0;
   end
 end
-
-reg [3:0] grid [0:3][0:3];
 
 genvar r, c;
 generate
