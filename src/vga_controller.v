@@ -222,6 +222,7 @@ module vga_controller(
         16'b0000000000000000
   };
 
+  wire [3:0] grid [0:3][0:3];
   generate
       genvar r, c;
       for (r = 0; r < 4; r = r + 1) begin : row_loop
@@ -269,15 +270,6 @@ module vga_controller(
   wire [3:0] gx = is_large ? ((cell_x - large_ox) >> 2) : ((cell_x - small_ox) >> 1);
   
   wire [4:0] gxl = (cell_x - large_ox) >> 1; 
-
-  reg [3:0] grid [0:3][0:3];
-
-  always @* begin
-    grid[0][0] = 4'd0;  grid[0][1] = 4'd1;  grid[0][2] = 4'd3;  grid[0][3] = 4'd2;
-    grid[1][0] = 4'd4;  grid[1][1] = 4'd5;  grid[1][2] = 4'd6;  grid[1][3] = 4'd7;
-    grid[2][0] = 4'd8;  grid[2][1] = 4'd9;  grid[2][2] = 4'd10; grid[2][3] = 4'd11;
-    grid[3][0] = 4'd1;  grid[3][1] = 4'd3;  grid[3][2] = 4'd4;  grid[3][3] = 4'd5;
-  end
 
   // Calculate the flat bit indices to cleanly pull out the 1D bits
   // 255 - (gy * 16) - gx
