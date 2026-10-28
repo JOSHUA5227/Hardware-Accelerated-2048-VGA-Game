@@ -254,25 +254,25 @@ module vga_controller(
   wire [3:0] gx_large_off = cell_x_plus2[5:2];
 
   wire [3:0] gx = is_large ? ((value == 4'd11) ? gx_large_off : gx_large_std) : gx_small;
-  wire [7:0] bit_index = ~{gy, gx};
-
-  reg glyph_pixel;
+  reg [15:0] glyph_row;
   always @(*) begin
     case (value)
-      4'h1: glyph_pixel = TILE_2[bit_index];
-      4'h2: glyph_pixel = TILE_4[bit_index];
-      4'h3: glyph_pixel = TILE_8[bit_index];
-      4'h4: glyph_pixel = TILE_16[bit_index];
-      4'h5: glyph_pixel = TILE_32[bit_index];
-      4'h6: glyph_pixel = TILE_64[bit_index];
-      4'h7: glyph_pixel = TILE_128[bit_index];
-      4'h8: glyph_pixel = TILE_256[bit_index];
-      4'h9: glyph_pixel = TILE_512[bit_index];
-      4'hA: glyph_pixel = TILE_1024[bit_index];
-      4'hB: glyph_pixel = TILE_2048[bit_index];
-      default: glyph_pixel = 1'b0;
+      4'h1: glyph_row = TILE_2[({~gy, 4'b0000}) +: 16];
+      4'h2: glyph_row = TILE_4[({~gy, 4'b0000}) +: 16];
+      4'h3: glyph_row = TILE_8[({~gy, 4'b0000}) +: 16];
+      4'h4: glyph_row = TILE_16[({~gy, 4'b0000}) +: 16];
+      4'h5: glyph_row = TILE_32[({~gy, 4'b0000}) +: 16];
+      4'h6: glyph_row = TILE_64[({~gy, 4'b0000}) +: 16];
+      4'h7: glyph_row = TILE_128[({~gy, 4'b0000}) +: 16];
+      4'h8: glyph_row = TILE_256[({~gy, 4'b0000}) +: 16];
+      4'h9: glyph_row = TILE_512[({~gy, 4'b0000}) +: 16];
+      4'hA: glyph_row = TILE_1024[({~gy, 4'b0000}) +: 16];
+      4'hB: glyph_row = TILE_2048[({~gy, 4'b0000}) +: 16];
+      default: glyph_row = 16'b0;
     endcase
   end
+
+  wire glyph_pixel = glyph_row[~gx];
 
 	reg [5:0] bg_colour;
 	always @(*) begin
