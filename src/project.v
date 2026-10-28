@@ -25,6 +25,7 @@ module tt_um_2048 (
   wire video_active;
   wire [9:0] pix_x;
   wire [9:0] pix_y;
+  wire [1:0] vga_row,vga_col;
 
   // TinyVGA PMOD
   assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
@@ -40,6 +41,7 @@ module tt_um_2048 (
   wire [63:0] grid; // main playing grid 
   wire [3:0] rand_pos; // random posistion from LFSR
 
+  wire [3:0] grid_value;
   wire game_win;
   wire game_loss;
 
@@ -58,6 +60,9 @@ module tt_um_2048 (
     .pix_x(pix_x),
     .pix_y(pix_y),
     .video_active(video_active),
+    .row(vga_row),
+    .col(vga_col),
+    .grid(grid_value),
     .won(game_win),
     .lost(game_loss),
     .R(R),
@@ -75,7 +80,9 @@ module tt_um_2048 (
     .left(ui_in[2]),
     .right(ui_in[3]),
 
-    .grid_flat(grid),// main playing grid 
+    .vga_col(vga_col),
+    .vga_row(vga_row),
+    .grid_value(grid_value),// main playing grid 
 
     .rand_val(rand_val), //start enable signal for LFSR once all updates and shifting is done
     .rand_pos(rand_pos),// random posistion from LFSR

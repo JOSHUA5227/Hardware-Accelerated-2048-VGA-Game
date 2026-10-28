@@ -4,6 +4,10 @@ module vga_controller(
   input wire [63:0] grid_flat,
   input wire [9:0] pix_x, pix_y,
   input wire video_active, won, lost,
+
+  input wire [3:0] grid,
+  output [1:0] row,col,
+
   output wire [1:0] R, G, B
 );
 
@@ -222,15 +226,6 @@ module vga_controller(
         16'b0000000000000000
   };
 
-  wire [3:0] grid [0:3][0:3];
-  generate
-      genvar r, c;
-      for (r = 0; r < 4; r = r + 1) begin : row_loop
-        for (c = 0; c < 4; c = c + 1) begin : col_loop
-            assign grid[r][c] = grid_flat[63 - (r * 16 + c * 4) -: 4];
-        end
-      end
-  endgenerate
 
   wire inside_board = (pix_x >= BOARD_X && pix_x < BOARD_X + BOARD_SIZE) &&
                       (pix_y >= BOARD_Y && pix_y < BOARD_Y + BOARD_SIZE);
@@ -238,18 +233,18 @@ module vga_controller(
   wire [9:0] rel_x = pix_x - BOARD_X;
   wire [9:0] rel_y = pix_y - BOARD_Y;
 
-  wire [1:0] col = (rel_x >= CELL_SIZE * 3) ? 2'd3 :
+  assign col = (rel_x >= CELL_SIZE * 3) ? 2'd3 :
                    (rel_x >= CELL_SIZE * 2) ? 2'd2 :
                    (rel_x >= CELL_SIZE * 1) ? 2'd1 : 2'd0;
 
-  wire [1:0] row = (rel_y >= CELL_SIZE * 3) ? 2'd3 :
+  assign row = (rel_y >= CELL_SIZE * 3) ? 2'd3 :
                    (rel_y >= CELL_SIZE * 2) ? 2'd2 :
                    (rel_y >= CELL_SIZE * 1) ? 2'd1 : 2'd0;
 
   wire [9:0] cell_x = rel_x - (col * CELL_SIZE);
   wire [9:0] cell_y = rel_y - (row * CELL_SIZE);
 
-  wire [3:0] current_tile = grid[row][col];
+  wire [3:0] current_tile = grid;
   wire is_large = (current_tile > 6);
 
   wire center = (cell_x >= (CELL_SIZE/2 - 1)) && (cell_x <= (CELL_SIZE/2)) && 
@@ -277,9 +272,9 @@ module vga_controller(
 
 
   function automatic [5:0] get_colour;
-    input [1:0] r, c;
+    input [3:0] grid;
     begin
-      case (grid[r][c])
+      case (grid)
         4'h0: get_colour = center ? 6'b11_11_11 : 6'b01_01_01; // Empty
         4'h1: get_colour = inside_text_box ? (TILE_2[bit_idx]    ? 6'b00_00_00 : 6'b11_00_00) : 6'b11_00_00; // 2
         4'h2: get_colour = inside_text_box ? (TILE_4[bit_idx]    ? 6'b00_00_00 : 6'b00_10_00) : 6'b00_10_00; // 4
@@ -303,7 +298,7 @@ module vga_controller(
   always @(*) begin
       rgb = 6'b00_00_00;
       if(video_active) begin
-        if(inside_board) rgb = get_colour(row, col);
+        if(inside_board) rgb = get_colour(grid);
       end
   end
  

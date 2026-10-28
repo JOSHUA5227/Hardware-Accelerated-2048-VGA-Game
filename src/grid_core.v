@@ -5,7 +5,8 @@ input wire s_rst, // ACTIVE high soft game reset
 
 input wire up,down,left,right,
 
-output wire [63:0] grid_flat, // main playing grid 
+input wire [1:0] vga_row,vga_col,
+output wire [3:0] grid_value,
 
 input wire [3:0] rand_pos,// random posistion from LFSR
 input wire rand_val,
@@ -60,6 +61,7 @@ assign shift_col = right ? (3-cols): cols;
 wire [1:0] new_val;
 assign new_val = rand_val ? 2: 1;
 
+assign grid_value = grid[vga_row][vga_col];
 integer i,j;
 always@(posedge clk or negedge rst_n)
 begin
@@ -375,13 +377,5 @@ begin
   end
 end
 
-genvar r, c;
-generate
-    for (r = 0; r < 4; r = r + 1) begin : ROW
-        for (c = 0; c < 4; c = c + 1) begin : COL
-            assign grid_flat[((r*4+c)*4) +: 4] = grid[r][c];
-        end
-    end
-endgenerate
 
 endmodule
