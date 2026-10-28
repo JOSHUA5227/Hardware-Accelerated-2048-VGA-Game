@@ -9,7 +9,9 @@ module update(
         input wire tworfr,//its two or 4 0 is 2 4 is 1
         
         input wire [1:0] vga_row,vga_col,
-        output wire [3:0] grid_value
+        output wire [3:0] grid_value,
+        output reg gamewon,
+        output wire game_over_vga
 );
 reg [3:0] grid[4][4]; // main playing grid
 
@@ -72,8 +74,8 @@ reg [1:0] trav_rowsr,trav_colsr;
 reg [3:0] game_over; // 3: D 2:U 1:R 0:L, Update specific flag when input was pressed and no change in grid,Clear all when grid changed
 reg [3:0] game_overr;
 
-reg gamewon,gamewonr;//bit for game won will fill every grid with 11 one by one
-
+reg gamewonr;//bit for game won will fill every grid with 11 one by one
+assign game_over_vga=&game_over;
 ///grid the update to it is via update  signal 
 reg update_to_grid;// Set to 1 Whenever there is any change in the grid combo used to clear all the game_over and update the 
 reg [3:0] value_to_update; ///value to update to the grid when update is given
