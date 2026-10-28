@@ -34,10 +34,8 @@ module tt_um_2048 (
   assign uio_oe  = 0;
 
   // List all unused inputs to prevent warnings
-  wire _unused = &{ena, clk, rst_n, 1'b0};
+  wire _unused = &{ena, ui_in[7:0] 1'b0};
 
-  wire s_rst;
-  wire up,down,left,right;
   wire rand_start; //start enable signal for LFSR once all updates and shifting is done
   wire [63:0] grid; // main playing grid 
   wire [7:0] rand_pos; // random posistion from LFSR
@@ -70,12 +68,12 @@ module tt_um_2048 (
   grid_core u_grid_core(
     .clk(clk),
     .rst_n(rst_n), // ACTIVE low Hard Reset
-    .s_rst(s_rst), // ACTIVE high soft game reset
+    .s_rst(ui_in[4]), // ACTIVE high soft game reset
 
-    .up(up),
-    .down(down),
-    .left(left),
-    .right(right),
+    .up(ui_in[0]),
+    .down(ui_in[1]),
+    .left(ui_in[2]),
+    .right(ui_in[3]),
 
     .grid_flat(grid),// main playing grid 
 
