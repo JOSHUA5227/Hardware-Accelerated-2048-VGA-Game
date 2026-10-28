@@ -45,6 +45,9 @@ module tt_um_2048 (
   wire game_win;
   wire game_loss;
 
+  wire s_rst;
+  wire [3:0] y;
+
   hvsync_generator hvsync_gen(
     .clk(clk),
     .reset(~rst_n),
@@ -69,15 +72,23 @@ module tt_um_2048 (
     .B(B)
   );
 
+  debounce_top db(
+      .clk(clk),
+      .rst_n(rst_n),
+      .btns(ui_in[4:0]),
+      .s_rst(s_rst),
+      .y(y)
+  );
+
   update u_grid_core(
     .clk(clk),
     .rst_n(rst_n), // ACTIVE low Hard Reset
-    .s_rst(ui_in[4]), // ACTIVE high soft game reset
+    .s_rst(s_rst), // ACTIVE high soft game reset
 
-    .U(ui_in[0]),
-    .D(ui_in[1]),
-    .L(ui_in[2]),
-    .R(ui_in[3]),
+    .U(y[0]),
+    .L(y[1]),
+    .D(y[2]),
+    .R(y[3]),
 
     .vga_col(vga_col),
     .vga_row(vga_row),

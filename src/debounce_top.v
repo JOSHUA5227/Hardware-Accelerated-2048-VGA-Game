@@ -175,18 +175,19 @@ module d_ff(
 endmodule
 
 module debounce_top(
-    input wire s_rst,
-    input wire [3:0]btns,
+    input wire [4:0] btns,
     input wire clk,
     input wire rst_n,
-    output wire y
+    output reg s_rst,
+    output reg [3:0] y
 );
     wire [4:0] sync_out;
     wire [2:0] pr_enc_out;
     wire mux_out;
+    wire debounced_out;
     
     d_ff ffs(
-        .d({s_rst,btns}),
+        .d(btns),
         .clk(clk),
         .rst_n(rst_n),
         .q(sync_out)
@@ -209,6 +210,24 @@ module debounce_top(
         .rst_n(rst_n),
         .btn(mux_out),
         .enc_sel(pr_enc_out),
-        .y(y)
+        .y(debounced_out)
     );
+
+    always @(*) begin
+        s_rst = 0;
+        y = 4'd0;
+        if(debounced_out) begin
+            case(pr_enc_out)
+                3'd0,3'd1,3'd2,3'd3: s_rst = 1;
+                3'd4: y = 4'b0001; // up
+                3'd5: y = 4'b0010; // left
+                3'd6: y = 4'b0100; // down
+                3'd7: y = 4'b1000; // right
+                default: begin
+                    s_rst = 0;
+                    y = 4'd0;
+                end
+            endcase
+        end
+    end
 endmodule
