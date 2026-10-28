@@ -20,7 +20,6 @@ reg [3:0] cmp_B;
 wire [3:0] alu_res; // Addition result 
 wire Z; // 1 when result is 0
 
-reg [3:0] grid[0:3][0:3];// main playing grid 
 adder u_adder(
 .A(A),
 .B(1'b1),
@@ -33,16 +32,8 @@ comparator u_comparator(
 .Z(Z)
 );
 
-generate
-  genvar r, c;
-  for (r = 0; r < 4; r = r + 1) begin : row_loop
-    for (c = 0; c < 4; c = c + 1) begin : col_loop
-        assign grid_flat[63 - (r * 16 + c * 4) -: 4] = grid[r][c];
-    end
-  end
-endgenerate
 
-reg [3:0] grid[0:3][0:3]; // main playing grid
+reg [3:0] grid[0:3][0:3];// main playing grid 
 
 //GAME UPDATE LOGIC
 reg [1:0] rows,cols;// grid travesal 
@@ -226,12 +217,12 @@ begin
     for(i = 0;i < 4; i = i + 1)
       for(j = 0; j < 4; j = j + 1)
           if(i[1:0] == rand_pos[3:2] && j[1:0] == rand_pos[1:0])
-            grid[i][j] <= rand_pos[7:4];
+            grid[i][j] <= new_val;
           else
             grid[i][j] <= 0; 
   end
   else if (!game_win && rand_start && ( grid[rand_pos[3:2]][rand_pos[1:0]] == 0))
-            grid[rand_pos[3:2]][rand_pos[1:0]] <= rand_pos[7:4];
+            grid[rand_pos[3:2]][rand_pos[1:0]] <= new_val;
 
   else if( (up || down))
   begin
