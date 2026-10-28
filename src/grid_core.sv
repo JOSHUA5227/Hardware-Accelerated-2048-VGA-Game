@@ -5,7 +5,7 @@ input wire s_rst, // ACTIVE high soft game reset
 
 input wire up,down,left,right,
 
-output reg [3:0] grid[0:3][0:3], // main playing grid 
+output reg [3:0] grid [0:3][0:3], // main playing grid 
 
 output reg rand_start, //start enable signal for LFSR once all updates and shifting is done
 input wire [7:0] rand_pos,// random posistion from LFSR
