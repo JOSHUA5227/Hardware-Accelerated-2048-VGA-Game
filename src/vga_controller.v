@@ -240,18 +240,20 @@ module vga_controller(
 
   wire is_large = (value >= 7);
 
-  // 1. Text region bounds (32px tall: Y = 16 to 47)
   wire in_y_range = (cell_y >= 16 && cell_y < 48);
-
-  // 2. X range: 32px wide (16 to 47) for 1-2 digits, 64px wide (0 to 63) for 3-4 digits
   wire in_x_range = is_large ? 1'b1 : (cell_x >= 16 && cell_x < 48);
+
   wire inside_text_box = in_y_range && in_x_range;
 
-  // 3. Precise 16x16 glyph sampling coordinates (0 to 15)
-  wire [3:0] gy = (cell_y - 16) >> 1;
-  wire [3:0] gx = is_large ? (value == 4'd1) ? (cell_x + 3 >> 2) : (cell_x >> 2) : ((cell_x - 16) >> 1);
+  wire [5:0] cell_x_plus2  = cell_x + 6'd2;
 
-  // 4. Bit index for [255:0] flat vector
+  wire [3:0] gy = cell_y[5:0] >= 6'd16 ? cell_y[4:1] - 4'd8 : 4'd0;
+
+  wire [3:0] gx_small     = cell_x[5:0] >= 6'd16 ? cell_x[4:1] - 4'd8 : 4'd0;
+  wire [3:0] gx_large_std = cell_x[5:2];
+  wire [3:0] gx_large_off = cell_x_plus2[5:2] + (0*cell_x_plus2[1:0]); 
+
+  wire [3:0] gx = is_large ? ((value == 4'd11) ? gx_large_off : gx_large_std) : gx_small;
   wire [7:0] bit_index = ~{gy, gx};
 
   reg glyph_pixel;

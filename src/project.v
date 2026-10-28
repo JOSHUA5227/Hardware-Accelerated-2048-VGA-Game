@@ -63,7 +63,7 @@ module tt_um_2048 (
     .video_active(video_active),
     .row(vga_row),
     .col(vga_col),
-    .grid(grid_value),
+    .value(grid_value),
     .won(game_win),
     .lost(game_loss),
     .R(R),
