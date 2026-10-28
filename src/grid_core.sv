@@ -5,7 +5,7 @@ input wire s_rst, // ACTIVE high soft game reset
 
 input wire up,down,left,right,
 
-output reg [3:0] grid [0:3][0:3], // main playing grid 
+output wire [63:0] grid_flat, // main playing grid 
 
 output reg rand_start, //start enable signal for LFSR once all updates and shifting is done
 input wire [7:0] rand_pos,// random posistion from LFSR
@@ -30,6 +30,17 @@ comparator u_comparator(
 .B(cmp_B),
 .Z(Z)
 );
+
+generate
+  genvar r, c;
+  for (r = 0; r < 4; r = r + 1) begin : row_loop
+    for (c = 0; c < 4; c = c + 1) begin : col_loop
+        assign grid_flat[63 - (r * 16 + c * 4) -: 4] = grid[r][c];
+    end
+  end
+endgenerate
+
+reg [3:0] grid[0:3][0:3]; // main playing grid
 
 //GAME UPDATE LOGIC
 reg [1:0] rows,cols;// grid travesal 

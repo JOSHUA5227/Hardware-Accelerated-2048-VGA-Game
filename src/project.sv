@@ -39,7 +39,7 @@ module tt_um_2048 (
   wire s_rst;
   wire up,down,left,right;
   wire rand_start; //start enable signal for LFSR once all updates and shifting is done
-  wire [3:0] grid [0:3][0:3]; // main playing grid 
+  wire [63:0] grid; // main playing grid 
   wire [7:0] rand_pos; // random posistion from LFSR
 
   wire game_win;
@@ -56,7 +56,7 @@ module tt_um_2048 (
   );
 
   vga_controller vga_contr (
-    .grid(grid),
+    .grid_flat(grid),
     .pix_x(pix_x),
     .pix_y(pix_y),
     .video_active(video_active),
@@ -77,7 +77,7 @@ module tt_um_2048 (
     .left(left),
     .right(right),
 
-    .grid(grid),// main playing grid 
+    .grid_flat(grid),// main playing grid 
 
     .rand_start(rand_start), //start enable signal for LFSR once all updates and shifting is done
     .rand_pos(rand_pos),// random posistion from LFSR
