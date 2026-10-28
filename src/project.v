@@ -35,7 +35,7 @@ module tt_um_2048 (
   assign uio_oe  = 0;
 
   // List all unused inputs to prevent warnings
-  wire _unused = &{ena, uio_in, ui_in[7:5], 1'b0};
+  wire _unused = &{ena, uio_in, ui_in[7:5], vga_contr.cell_x_plus2[1:0], 1'b0};
 
   wire rand_val; //start enable signal for LFSR once all updates and shifting is done
   wire [3:0] rand_pos; // random posistion from LFSR
