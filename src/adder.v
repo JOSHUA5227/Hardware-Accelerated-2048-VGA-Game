@@ -4,5 +4,8 @@ input wire B,
 output wire [3:0] alu_res
 );
 
-assign alu_res = A + B;
+wire [4:0] res;
+assign res = A + B;
+
+assign alu_res = res[3:0];
 endmodule
