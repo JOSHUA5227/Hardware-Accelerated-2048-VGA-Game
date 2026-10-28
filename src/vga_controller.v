@@ -4,17 +4,11 @@ module vga_controller(
   input wire [9:0] pix_x, pix_y,
   input wire video_active, won, lost,
 
-  input wire [3:0] grid,
+  input wire [3:0] value,
   output [1:0] row,col,
 
   output wire [1:0] R, G, B
-);
-
-  // Parameterized sizes
-  localparam BOARD_SIZE = 300;  // variable board size; preferable range 256 - 400
-  localparam BOARD_X = (640 - BOARD_SIZE) / 2;
-  localparam BOARD_Y = (480 - BOARD_SIZE) / 2;
-  localparam CELL_SIZE = BOARD_SIZE / 4; 
+); 
 
   localparam [255:0] TILE_2 = {
         16'b0000000000000000,
@@ -225,80 +219,90 @@ module vga_controller(
         16'b0000000000000000
   };
 
+    // Parameterized sizes
+  localparam BOARD_SIZE = 256;  // variable board size; preferable range 256 - 400
+  localparam BOARD_X = (640 - BOARD_SIZE) / 2;
+  localparam BOARD_Y = (480 - BOARD_SIZE) / 2;
 
   wire inside_board = (pix_x >= BOARD_X && pix_x < BOARD_X + BOARD_SIZE) &&
                       (pix_y >= BOARD_Y && pix_y < BOARD_Y + BOARD_SIZE);
 
-  wire [9:0] rel_x = pix_x - BOARD_X;
-  wire [9:0] rel_y = pix_y - BOARD_Y;
+  wire [7:0] rel_x = pix_x[7:0] - BOARD_X[7:0];
+  wire [7:0] rel_y = pix_y[7:0] - BOARD_Y[7:0];
 
-  assign col = (rel_x >= CELL_SIZE * 3) ? 2'd3 :
-                   (rel_x >= CELL_SIZE * 2) ? 2'd2 :
-                   (rel_x >= CELL_SIZE * 1) ? 2'd1 : 2'd0;
+  assign col = rel_x[7:6];
+  assign row = rel_y[7:6];
 
-  assign row = (rel_y >= CELL_SIZE * 3) ? 2'd3 :
-                   (rel_y >= CELL_SIZE * 2) ? 2'd2 :
-                   (rel_y >= CELL_SIZE * 1) ? 2'd1 : 2'd0;
+  wire [5:0] cell_x = rel_x[5:0];
+  wire [5:0] cell_y = rel_y[5:0];
 
-  wire [9:0] cell_x = rel_x - (col * CELL_SIZE);
-  wire [9:0] cell_y = rel_y - (row * CELL_SIZE);
+  wire center = (cell_x[5:1] == 5'd15) && (cell_y[5:1] == 5'd15);
 
-  wire is_large = (grid > 6);
+  wire is_large = (value >= 7);
 
-  wire center = (cell_x >= (CELL_SIZE/2 - 1)) && (cell_x <= (CELL_SIZE/2)) && 
-                (cell_y >= (CELL_SIZE/2 - 1)) && (cell_y <= (CELL_SIZE/2));
+  // 1. Text region bounds (32px tall: Y = 16 to 47)
+  wire in_y_range = (cell_y >= 16 && cell_y < 48);
 
-  // Dynamic Box Offsets: Text stays exactly 32h x 32w (or 32h x 64w for large text)
-  wire [9:0] oy       = (CELL_SIZE - 32) / 2; // Offset for 32px tall glyphs
-  wire [9:0] small_ox = (CELL_SIZE - 32) / 2; // Offset for 32px wide glyphs
-  wire [9:0] large_ox = (CELL_SIZE - 64) / 2; // Offset for 64px wide glyphs
+  // 2. X range: 32px wide (16 to 47) for 1-2 digits, 64px wide (0 to 63) for 3-4 digits
+  wire in_x_range = is_large ? 1'b1 : (cell_x >= 16 && cell_x < 48);
+  wire inside_text_box = in_y_range && in_x_range;
 
-  wire [9:0] ox       = is_large ? large_ox : small_ox;
-  wire [9:0] glyph_w  = is_large ? 64 : 32;
+  // 3. Precise 16x16 glyph sampling coordinates (0 to 15)
+  wire [3:0] gy = (cell_y - 16) >> 1;
+  wire [3:0] gx = is_large ? (value == 4'd1) ? (cell_x + 3 >> 2) : (cell_x >> 2) : ((cell_x - 16) >> 1);
 
-  wire inside_text_box = (cell_x >= ox && cell_x < ox + glyph_w) &&
-                         (cell_y >= oy && cell_y < oy + 32);
+  // 4. Bit index for [255:0] flat vector
+  wire [7:0] bit_index = ~{gy, gx};
 
-  wire [3:0] gy = (cell_y - oy) >> 1;
-  wire [3:0] gx = is_large ? ((cell_x - large_ox) >> 2) : ((cell_x - small_ox) >> 1);
-  
-  wire [4:0] gxl = (cell_x - large_ox) >> 1; 
-
-  // Calculate the flat bit indices to cleanly pull out the 1D bits
-  // 255 - (gy * 16) - gx
-  wire [7:0] bit_idx = 8'd255 - {gy, 4'd0} - gx; 
-
-
-  function automatic [5:0] get_colour;
-    input [3:0] grid;
-    begin
-      case (grid)
-        4'h0: get_colour = center ? 6'b11_11_11 : 6'b01_01_01; // Empty
-        4'h1: get_colour = inside_text_box ? (TILE_2[bit_idx]    ? 6'b00_00_00 : 6'b11_00_00) : 6'b11_00_00; // 2
-        4'h2: get_colour = inside_text_box ? (TILE_4[bit_idx]    ? 6'b00_00_00 : 6'b00_10_00) : 6'b00_10_00; // 4
-        4'h3: get_colour = inside_text_box ? (TILE_8[bit_idx]    ? 6'b00_00_00 : 6'b11_11_01) : 6'b11_11_01; // 8
-        4'h4: get_colour = inside_text_box ? (TILE_16[bit_idx]   ? 6'b00_00_00 : 6'b00_10_11) : 6'b00_10_11; // 16
-        4'h5: get_colour = inside_text_box ? (TILE_32[bit_idx]   ? 6'b00_00_00 : 6'b10_01_11) : 6'b10_01_11; // 32
-        4'h6: get_colour = inside_text_box ? (TILE_64[bit_idx]   ? 6'b00_00_00 : 6'b00_11_11) : 6'b00_11_11; // 64
-        4'h7: get_colour = inside_text_box ? (TILE_128[bit_idx]  ? 6'b00_00_00 : 6'b11_01_01) : 6'b11_01_01; // 128
-        4'h8: get_colour = inside_text_box ? (TILE_256[bit_idx]  ? 6'b00_00_00 : 6'b01_11_01) : 6'b01_11_01; // 256
-        4'h9: get_colour = inside_text_box ? (TILE_512[bit_idx]  ? 6'b00_00_00 : 6'b11_10_00) : 6'b11_10_00; // 512
-        4'hA: get_colour = inside_text_box ? (TILE_1024[bit_idx] ? 6'b00_00_00 : 6'b01_01_11) : 6'b01_01_11; // 1024
-        4'hB: get_colour = inside_text_box ? (TILE_2048[bit_idx] ? 6'b00_00_00 : 6'b11_01_11) : 6'b11_01_11; // 2048
-        default: get_colour = center ? 6'b11_11_11 : 6'b01_01_01;
-      endcase
-    end
-  endfunction
-
-  reg [5:0] rgb;
-  assign {R, G, B} = rgb;
-  
+  reg glyph_pixel;
   always @(*) begin
-      rgb = 6'b00_00_00;
-      if(video_active) begin
-        rgb = lost ? 6'b11_00_00 : won ? 6'b00_10_01 : 6'b00_00_00;
-        if(inside_board) rgb = get_colour(grid);
-      end
+    case (value)
+      4'h1: glyph_pixel = TILE_2[bit_index];
+      4'h2: glyph_pixel = TILE_4[bit_index];
+      4'h3: glyph_pixel = TILE_8[bit_index];
+      4'h4: glyph_pixel = TILE_16[bit_index];
+      4'h5: glyph_pixel = TILE_32[bit_index];
+      4'h6: glyph_pixel = TILE_64[bit_index];
+      4'h7: glyph_pixel = TILE_128[bit_index];
+      4'h8: glyph_pixel = TILE_256[bit_index];
+      4'h9: glyph_pixel = TILE_512[bit_index];
+      4'hA: glyph_pixel = TILE_1024[bit_index];
+      4'hB: glyph_pixel = TILE_2048[bit_index];
+      default: glyph_pixel = 1'b0;
+    endcase
   end
+
+	reg [5:0] bg_colour;
+	always @(*) begin
+      case (value)
+        4'h0: bg_colour = center ? 6'b11_11_11 : 6'b01_01_01; // Empty
+        4'h1: bg_colour = 6'b11_00_00; // 2
+        4'h2: bg_colour = 6'b00_10_00; // 4
+        4'h3: bg_colour = 6'b11_11_01; // 8
+        4'h4: bg_colour = 6'b00_10_11; // 16
+        4'h5: bg_colour = 6'b10_01_11; // 32
+        4'h6: bg_colour = 6'b00_11_11; // 64
+        4'h7: bg_colour = 6'b11_01_01; // 128
+        4'h8: bg_colour = 6'b01_11_01; // 256
+        4'h9: bg_colour = 6'b11_10_00; // 512
+        4'hA: bg_colour = 6'b01_01_11; // 1024
+        4'hB: bg_colour = 6'b11_01_11; // 2048
+        default: bg_colour = center ? 6'b11_11_11 : 6'b01_01_01;
+      endcase
+	end
+
+	wire [5:0] tile_colour = (inside_text_box && glyph_pixel) ? 6'b00_00_00 : bg_colour;
+
+	reg [5:0] rgb;
+	always @(*) begin
+		if(video_active) begin
+		if(inside_board) rgb = tile_colour;
+		else rgb = won ? 6'b00_10_01 : (lost ? 6'b11_00_00 : 6'b00_00_00);
+		end else begin
+		rgb = 6'b00_00_00;
+		end
+	end
  
+	assign {R, G, B} = rgb;
+
 endmodule

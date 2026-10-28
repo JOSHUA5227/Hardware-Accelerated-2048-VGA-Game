@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026 Your Name
+ * Copyright (c) 2026 Mirafra Technologies
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -38,7 +38,6 @@ module tt_um_2048 (
   wire _unused = &{ena, uio_in, ui_in[7:5], 1'b0};
 
   wire rand_val; //start enable signal for LFSR once all updates and shifting is done
-  wire [63:0] grid; // main playing grid 
   wire [3:0] rand_pos; // random posistion from LFSR
 
   wire [3:0] grid_value;
