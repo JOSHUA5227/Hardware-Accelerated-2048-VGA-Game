@@ -36,7 +36,7 @@ module tt_um_2048 (
   // List all unused inputs to prevent warnings
   wire _unused = &{ena, ui_in[7:5], 1'b0};
 
-  wire rand_start; //start enable signal for LFSR once all updates and shifting is done
+  wire rand_val; //start enable signal for LFSR once all updates and shifting is done
   wire [63:0] grid; // main playing grid 
   wire [7:0] rand_pos; // random posistion from LFSR
 
@@ -61,7 +61,7 @@ module tt_um_2048 (
     .won(game_win),
     .lost(game_loss),
     .R(R),
-    .G(G), 
+    .G(G),
     .B(B)
   );
 
@@ -77,11 +77,17 @@ module tt_um_2048 (
 
     .grid_flat(grid),// main playing grid 
 
-    .rand_start(rand_start), //start enable signal for LFSR once all updates and shifting is done
+    .rand_val(rand_val), //start enable signal for LFSR once all updates and shifting is done
     .rand_pos(rand_pos),// random posistion from LFSR
 
     .game_win(game_win),
     .game_loss(game_loss)
   );
 
+  randomizer random(
+    .clk(clk),
+    .rst_n(rst_n),
+    .rand_pos(rand_pos),
+    .rand_val(rand_val)
+  );
 endmodule
