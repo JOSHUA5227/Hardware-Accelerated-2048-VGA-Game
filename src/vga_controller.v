@@ -251,7 +251,7 @@ module vga_controller(
 
   wire [3:0] gx_small     = cell_x[5:0] >= 6'd16 ? cell_x[4:1] - 4'd8 : 4'd0;
   wire [3:0] gx_large_std = cell_x[5:2];
-  wire [3:0] gx_large_off = cell_x_plus2[5:2] + (0*cell_x_plus2[1:0]); 
+  wire [3:0] gx_large_off = cell_x_plus2[5:2]; 
 
   wire [3:0] gx = is_large ? ((value == 4'd11) ? gx_large_off : gx_large_std) : gx_small;
   wire [7:0] bit_index = ~{gy, gx};
