@@ -7,7 +7,6 @@ input wire up,down,left,right,
 
 output wire [63:0] grid_flat, // main playing grid 
 
-output reg rand_start, //start enable signal for LFSR once all updates and shifting is done
 input wire [3:0] rand_pos,// random posistion from LFSR
 input wire rand_val,
 
@@ -43,7 +42,7 @@ reg [15:0] valid;//valid array for when deciding if the location should not be u
 reg values_calculated; // flag to speificy when calculating the new values are done
 reg update_done; //complete cycle is done and allow next input, and clear when all inputs are 0
 reg [3:0] game_over; // 3: Up 2:Down 1:Left 0:Right, Update specific flag when input was pressed and no change in grid,Clear all when grid changed
-
+reg rand_start; //start enable signal for LFSR once all updates and shifting is done
 
 wire [2:0] next_row;
 assign next_row = rows + 1;
