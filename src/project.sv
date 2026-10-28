@@ -26,11 +26,11 @@ module tt_um_2048 (
 
 wire s_rst;
 wire up,down,left,right;
-reg [3:0] grid[0:3][0:3]; // main playing grid 
-reg rand_start; //start enable signal for LFSR once all updates and shifting is done
+wire [3:0] grid[0:3][0:3]; // main playing grid 
+wire rand_start; //start enable signal for LFSR once all updates and shifting is done
 wire [7:0] rand_pos; // random posistion from LFSR
 
-reg game_win;
+wire game_win;
 wire game_loss;
 
 grid_core u_grid_core(
