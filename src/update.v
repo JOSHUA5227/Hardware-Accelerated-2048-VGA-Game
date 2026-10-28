@@ -13,7 +13,7 @@ module update(
         output reg gamewon,
         output wire game_over_vga
 );
-reg [3:0] grid[4][4]; // main playing grid
+reg [3:0] grid[0:3][0:3]; // main playing grid
 
 assign grid_value=grid[vga_row][vga_col];
 
@@ -156,7 +156,7 @@ begin
 end
 end
 
-always_comb begin//updater logic
+always@(*) begin//updater logic
         gamewonr=gamewon;
         update_to_grid=1'b0;
         value_to_update=4'b0;
@@ -456,10 +456,10 @@ module Adder(
 
 always@(*) begin
     if(AorS)begin
-        OP=4'(A+B);
+        OP=(A+B);
     end
     else begin
-        OP=4'(A-B);
+        OP=(A-B);
     end
 end
 
