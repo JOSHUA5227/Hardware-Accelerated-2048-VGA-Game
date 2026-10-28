@@ -5,10 +5,11 @@ input wire s_rst, // ACTIVE high soft game reset
 
 input wire up,down,left,right,
 
-output wire [63:0] grid_flat, // main playing grid 
+input wire [1:0] vga_row,vga_col,
+output wire [3:0] grid_value,
 
-output reg rand_start, //start enable signal for LFSR once all updates and shifting is done
-input wire [7:0] rand_pos,// random posistion from LFSR
+input wire [3:0] rand_pos,// random posistion from LFSR
+input wire rand_val,
 
 output reg game_win,
 output wire game_loss
@@ -31,16 +32,8 @@ comparator u_comparator(
 .Z(Z)
 );
 
-generate
-  genvar r, c;
-  for (r = 0; r < 4; r = r + 1) begin : row_loop
-    for (c = 0; c < 4; c = c + 1) begin : col_loop
-        assign grid_flat[63 - (r * 16 + c * 4) -: 4] = grid[r][c];
-    end
-  end
-endgenerate
 
-reg [3:0] grid[0:3][0:3]; // main playing grid
+reg [3:0] grid[0:3][0:3];// main playing grid 
 
 //GAME UPDATE LOGIC
 reg [1:0] rows,cols;// grid travesal 
@@ -50,7 +43,7 @@ reg [15:0] valid;//valid array for when deciding if the location should not be u
 reg values_calculated; // flag to speificy when calculating the new values are done
 reg update_done; //complete cycle is done and allow next input, and clear when all inputs are 0
 reg [3:0] game_over; // 3: Up 2:Down 1:Left 0:Right, Update specific flag when input was pressed and no change in grid,Clear all when grid changed
-
+reg rand_start; //start enable signal for LFSR once all updates and shifting is done
 
 wire [2:0] next_row;
 assign next_row = rows + 1;
@@ -64,6 +57,11 @@ assign shift_row = down ? (3-rows): rows;
 wire [1:0] shift_col;
 assign shift_col = right ? (3-cols): cols; 
 
+
+wire [1:0] new_val;
+assign new_val = rand_val ? 2: 1;
+
+assign grid_value = grid[vga_row][vga_col];
 integer i,j;
 always@(posedge clk or negedge rst_n)
 begin
@@ -219,13 +217,13 @@ begin
     valid <= 0;
     for(i = 0;i < 4; i = i + 1)
       for(j = 0; j < 4; j = j + 1)
-          if(i == rand_pos[3:2] && j == rand_pos[1:0])
-            grid[i][j] <= rand_pos[7:4];
+          if(i[1:0] == rand_pos[3:2] && j[1:0] == rand_pos[1:0])
+            grid[i][j] <= new_val;
           else
             grid[i][j] <= 0; 
   end
   else if (!game_win && rand_start && ( grid[rand_pos[3:2]][rand_pos[1:0]] == 0))
-            grid[rand_pos[3:2]][rand_pos[1:0]] <= rand_pos[7:4];
+            grid[rand_pos[3:2]][rand_pos[1:0]] <= new_val;
 
   else if( (up || down))
   begin
@@ -236,14 +234,14 @@ begin
           if(Z) // A == B and B they are non zero
           begin
               grid[rows][cols] <= alu_res; // A is grid[rows][cols] and B is 1
-              grid[next_row][cols] <= 0;
+              grid[next_row[1:0]][cols] <= 0;
               valid[{rows,cols}] <= 1;
               valid[{next_row[1:0],cols}] <= 1;
               is_updated <= 1;
           end
-          else if(grid[next_row][cols] == 0)
+          else if(grid[next_row[1:0]][cols] == 0)
           begin
-                grid[next_row][cols] <= grid[rows][cols];
+                grid[next_row[1:0]][cols] <= grid[rows][cols];
                 grid[rows][cols] <= 0;
                 is_updated <= 1;
           end
@@ -310,14 +308,14 @@ begin
           if(Z)
           begin
               grid[rows][cols] <= alu_res; // A is grid[rows][cols] and B is 1
-              grid[rows][next_col] <= 0;
+              grid[rows][next_col[1:0]] <= 0;
               valid[{rows,cols}] <= 1;
               valid[{rows,next_col[1:0]}] <= 1;
               is_updated <= 1;
           end
-          else if (grid[rows][next_col] == 0)
+          else if (grid[rows][next_col[1:0]] == 0)
           begin
-              grid[rows][next_col] <= grid[rows][cols];
+              grid[rows][next_col[1:0]] <= grid[rows][cols];
               grid[rows][cols] <= 0;
               is_updated <= 1;
           end
@@ -327,7 +325,7 @@ begin
       begin
         if(grid[rows][cols] == 4'd11)
             game_win <= 1;
-        if(grid[rows][shift_col] == 0)
+        if(grid[rows][shift_col[1:0]] == 0)
         begin
            if((shift_col  + 1 < 4) && (grid[rows][shift_col + 1] != 0))
            begin
