@@ -6,14 +6,14 @@ module debouncer (
     input wire btn,
     input wire vsync,
     input wire [2:0] enc_sel, // Select lines coming from 8:3 encoder so that if higher priority button is pressed then we restart the counter
-    output reg y
+    output reg y,
+    output reg [2:0] sel_lines
 );
 
     reg [1:0] ps, ns;
     reg vsync_reg;
     reg count, count_next;
     wire tick = vsync_reg & ~vsync;
-    reg [2:0] sel_lines;
     localparam S0 = 2'd0, S1 = 2'd1, S2 = 2'd2, S3 = 2'd3;
     
     always @(posedge clk or negedge rst_n) begin
@@ -68,7 +68,7 @@ module debouncer (
             
             S3: begin
                 y = 1'b1;
-                if(btn == 0) begin
+                if(btn == 0 || (sel_lines != enc_sel)) begin
                     if(tick) begin
                         if(count) begin
                             ns = S0;
@@ -190,7 +190,8 @@ module debounce_top(
     wire [2:0] pr_enc_out;
     wire mux_out;
     wire debounced_out;
-    
+    wire [2:0] sel_lines;
+
     d_ff ffs(
         .d(btns),
         .clk(clk),
@@ -216,7 +217,8 @@ module debounce_top(
         .btn(mux_out),
         .vsync(vsync),
         .enc_sel(pr_enc_out),
-        .y(debounced_out)
+        .y(debounced_out),
+        .sel_lines(sel_lines)
     );
 
     // Demux
@@ -224,7 +226,7 @@ module debounce_top(
         s_rst = 1'b0;
         y = 4'd0;
         if(debounced_out) begin
-            case(pr_enc_out)
+            case(sel_lines)
                 3'd0: s_rst = 1'b1;
                 3'd4: y = 4'b0001; // up
                 3'd5: y = 4'b0010; // left
