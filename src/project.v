@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2026 Mirafra Technologies
+ * Copyright (c) 2026 Your Name
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -74,6 +74,7 @@ module tt_um_2048 (
   debounce_top db(
       .clk(clk),
       .rst_n(rst_n),
+      .vsync(vsync),
       .btns(ui_in[4:0]),
       .s_rst(s_rst),
       .y(y)
@@ -96,8 +97,8 @@ module tt_um_2048 (
     .tworfr(rand_val), //start enable signal for LFSR once all updates and shifting is done
     .rand_pos(rand_pos),// random posistion from LFSR
 
-    .gamewon(game_win),
-    .game_over_vga(game_loss)
+    .gamewon_vga(game_win),
+    .gamelost_vga(game_loss)
   );
 
   randomizer random(

@@ -1,21 +1,21 @@
+`default_nettype none
 module update(
         input wire clk,
         input wire rst_n, // ACTIVE low Hard Reset
         input wire s_rst, // ACTIVE high soft game reset needed to start a game
         input wire R,D,U,L,
-        // output reg valid[0:15], //valid array for random
         // random is fully pushed to user output reg rand_start, //start enable signal for LFSR once all updates and shifting is done is active high
         input wire [3:0] rand_pos,// random posistion from LFSR
         input wire tworfr,//its two or 4 0 is 2 4 is 1
-        
-        input wire [1:0] vga_row,vga_col,
+        //request by vga controller
+        input wire [1:0] vga_row,
+        input wire [1:0] vga_col,
         output wire [3:0] grid_value,
-        output reg gamewon,
-        output wire game_over_vga
+        //game state 
+        output wire  gamewon_vga,
+        output wire gamelost_vga
 );
-reg [3:0] grid[0:3][0:3]; // main playing grid
-
-assign grid_value=grid[vga_row][vga_col];
+reg [3:0]grid[0:3][0:3];
 
 localparam [2:0] LATCH_ST = 0,//default state
            FINDZ = 1,//0 in notes
@@ -58,7 +58,7 @@ Adder A1(
         .AorS(AorS),
         .OP(res)
 );
-
+assign grid_value=grid[vga_row][vga_col];
 //registers grid state next_ptr trav_ptr first_time?  and thier update 
 reg [2:0] state;
 reg [2:0] stater;
@@ -74,8 +74,8 @@ reg [1:0] trav_rowsr,trav_colsr;
 reg [3:0] game_over; // 3: D 2:U 1:R 0:L, Update specific flag when input was pressed and no change in grid,Clear all when grid changed
 reg [3:0] game_overr;
 
-reg gamewonr;//bit for game won will fill every grid with 11 one by one
-assign game_over_vga=&game_over;
+reg gamewon,gamewonr;//bit for game won will fill every grid with 11 one by one
+
 ///grid the update to it is via update  signal 
 reg update_to_grid;// Set to 1 Whenever there is any change in the grid combo used to clear all the game_over and update the 
 reg [3:0] value_to_update; ///value to update to the grid when update is given
@@ -83,7 +83,8 @@ reg place_to_update;//0 is now 1 is trav
 integer reset_i,reset_j;//reset integers
 reg srst_latched,cleared_bit;//cleared_bit and srst=1 will clear everything and 
 //cleared_bit and srst=1 and srst_latched=0 will set a random point in grid as 2.
-
+assign gamewon_vga=gamewon;
+assign gamelost_vga=&game_over;//all 1 is game over
 wire [1:0] shiftedtwo;//this is made intentionally
 assign shiftedtwo=2'b01<<tworfr;
 reg plusone,colorrow;//if plusone is 1 it is +1 else -1 and colorrow is 1 it is row else col to be updated
@@ -196,7 +197,7 @@ always@(*) begin//updater logic
                 B_comp1=4'd0;
                 //trav==end
                 A_comp2=colorrow?{2'b0,trav_rows}:{2'b0,trav_cols};
-                B_comp2=plusone?F1_ROW:F1_COL;//if L or U its 3 else 0
+                B_comp2=plusone?{2'b0,F1_ROW}:{2'b0,F1_COL};//if L or U its 3 else 0
                 case({comp1_out,comp2_out})
                 2'b00:begin//no movement here gatecheck takes care
                         stater=GATECHECK;
@@ -272,7 +273,7 @@ always@(*) begin//updater logic
                         stater=UPDATENOW;
                         A_add=grid_now;
                         B_add=4'b0001;
-                        AorS=1;//its always +1 for grid additions
+                        AorS=1'b1;//its always +1 for grid additions
                         update_to_grid=1'b1;
                         place_to_update=1'b0;//now
                         //game_overr=0;//update to all zero this is correct im doing this cos instead of this i can mux the update_to_grid in seq block
@@ -324,7 +325,7 @@ always@(*) begin//updater logic
         UPDATETRAV:begin
                 //trav==end
                 A_comp1=colorrow?{2'b0,trav_rows}:{2'b0,trav_cols};
-                B_comp1=plusone?F1_ROW:F1_COL;
+                B_comp1=plusone?{2'b0,F1_ROW}:{2'b0,F1_COL};
                 //trav==dest
                 A_comp2={trav_rows,trav_cols};
                 B_comp2=(plusone^colorrow)?{F2_ROW,F2_COL}:{F1_ROW,F1_COL};//if L or D or not
@@ -365,7 +366,7 @@ always@(*) begin//updater logic
         GATECHECK:begin//entry from state 0 only to check if the addr is diff and can be cleared
                 //trav==end  ==> T state is 3 or state 1(and do +1 to trav)
                 A_comp1=colorrow?{2'b0,trav_rows}:{2'b0,trav_cols};
-                B_comp1=plusone?F1_ROW:F1_COL;
+                B_comp1=plusone?{2'b0,F1_ROW}:{2'b0,F1_COL};
                 //trav==now  ==> T dont clear else clear 
                 A_comp2={trav_rows,trav_cols};
                 B_comp2={now_rows,now_cols};
@@ -392,7 +393,7 @@ always@(*) begin//updater logic
                 A_comp2=grid_trav;
                 B_comp2=4'b0000;
                 
-                if(comp1_out && (~game_over))begin//can insert when gameown and gameover is cleared
+                if(comp1_out && (~gamewon))begin//can insert when gameown and gameover is cleared
                         if(comp2_out)begin//free
                                 place_to_update=1'b1;//trav
                                 value_to_update={2'b0,shiftedtwo};//insert a 2
@@ -447,24 +448,6 @@ always@(*) begin//updater logic
 
 endmodule
 
-module Adder(
-    input [3:0]A,
-    input [3:0]B,
-    input AorS,//1 is add 0 is substract
-    output reg [3:0] OP
-);
-
-always@(*) begin
-    if(AorS)begin
-        OP=(A+B);
-    end
-    else begin
-        OP=(A-B);
-    end
-end
-
-endmodule
-
 module EQ(
         input wire [3:0] A,
         input wire [3:0] B,
@@ -472,5 +455,23 @@ module EQ(
 );
 
 assign OP=(A==B);
+
+endmodule
+
+module Adder(
+    input wire [3:0]A,
+    input wire [3:0]B,
+    input wire AorS,//1 is add 0 is substract
+    output reg [3:0] OP
+);
+
+always@(*) begin
+    if(AorS)begin
+        OP=A+B;
+    end
+    else begin
+        OP=A-B;
+    end
+end
 
 endmodule

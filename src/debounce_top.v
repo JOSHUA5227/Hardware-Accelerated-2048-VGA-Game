@@ -1,47 +1,43 @@
-// If we go for 24ms
-// Since clock running at 25.175 MHz, so count value till (24*10^-3)*(25.175*10^6) = 604,200
-// So we require 20-bit counter
-// 604_200d = 1001 0011 1000 0010 1000
-// 579_025d = 1000 1101 0101 1101 0001
-// Thus we can only check when upper 4-bits become 1001, that means we are checking somewhere between 23 to 24 ms
-// In this way we don't need 20-bit compartor, just 4-bit would work
-
 `default_nettype none
 
-module debouncer #(
-    parameter debounce_limit = 20'b1001_0011_1000_0010_1000
-)(
+module debouncer (
     input wire clk,
     input wire rst_n,
     input wire btn,
+    input wire vsync,
     input wire [2:0] enc_sel, // Select lines coming from 8:3 encoder so that if higher priority button is pressed then we restart the counter
     output reg y
 );
 
     reg [1:0] ps, ns;
-    reg [19:0] t_curr, t_next;
+    reg vsync_reg;
+    reg count, count_next;
+    wire tick = vsync_reg & ~vsync;
     reg [2:0] sel_lines;
     localparam S0 = 2'd0, S1 = 2'd1, S2 = 2'd2, S3 = 2'd3;
-
+    
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
             ps <= S0;
-            t_curr <= 20'd0;
+            count <= 1'b0;
+            vsync_reg <= 1'b0;
             sel_lines <= 3'd0;
         end
         else begin
             ps <= ns;
-            t_curr <= t_next;
+            vsync_reg <= vsync;
             if(ps == S0) begin
                 sel_lines <= enc_sel;
             end
+            count <= count_next;
         end
     end
     
     always @(*) begin
         ns = ps;
-        t_next = t_curr;
-        y = 0;
+        y = 1'b0;
+        // count keeps its value between ticks, it only changes on a tick or a bounce
+        count_next = count;
         case(ps)
             S0: begin
                 if(btn) ns = S1;
@@ -49,42 +45,50 @@ module debouncer #(
             
             S1: begin
                 if(btn == 1) begin
-                    if(t_curr[19:16] == debounce_limit[19:16]) begin
-                        ns = S2;
-                        t_next = 20'd0;
+                    if(tick) begin
+                        if(count) begin
+                            ns = S2;
+                            count_next = 1'b0;
+                        end
+                        else begin
+                            count_next = 1'b1;
+                        end
                     end
-                    else t_next = t_curr + 20'd1;
                 end
                 else begin
-                    t_next = 20'd0;
                     ns = S0;
+                    count_next = 1'b0;
                 end
             end
             
             S2: begin
-                y = 1;
+                y = 1'b1;
                 if(btn == 0) ns = S3;
             end
             
             S3: begin
-                y = 1;
+                y = 1'b1;
                 if(btn == 0) begin
-                    if(t_curr[19:16] == debounce_limit[19:16]) begin
-                        ns = S0;
-                        t_next = 20'd0;
+                    if(tick) begin
+                        if(count) begin
+                            ns = S0;
+                            count_next = 1'b0;
+                        end
+                        else begin
+                            count_next = 1'b1;
+                        end
                     end
-                    else t_next = t_curr + 20'd1;
                 end
                 else begin
-                    t_next = 20'd0;
                     ns = S2;
+                    count_next = 1'b0;
                 end
             end
         endcase
         if(ps == S1) begin
             if (sel_lines != enc_sel) begin
                 ns = S0;
-                t_next = 20'd0;
+                count_next = 1'b0;
             end
         end
     end
@@ -164,8 +168,8 @@ module d_ff(
     
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
-            q <= 0;
-            q_sync <= 0;
+            q <= 5'd0;
+            q_sync <= 5'd0;
         end
         else begin
             q_sync <= d;
@@ -178,6 +182,7 @@ module debounce_top(
     input wire [4:0] btns,
     input wire clk,
     input wire rst_n,
+    input wire vsync,
     output reg s_rst,
     output reg [3:0] y
 );
@@ -209,22 +214,24 @@ module debounce_top(
         .clk(clk),
         .rst_n(rst_n),
         .btn(mux_out),
+        .vsync(vsync),
         .enc_sel(pr_enc_out),
         .y(debounced_out)
     );
 
+    // Demux
     always @(*) begin
-        s_rst = 0;
+        s_rst = 1'b0;
         y = 4'd0;
         if(debounced_out) begin
             case(pr_enc_out)
-                3'd0: s_rst = 1;
+                3'd0: s_rst = 1'b1;
                 3'd4: y = 4'b0001; // up
                 3'd5: y = 4'b0010; // left
                 3'd6: y = 4'b0100; // down
                 3'd7: y = 4'b1000; // right
                 default: begin
-                    s_rst = 0;
+                    s_rst = 1'b0;
                     y = 4'd0;
                 end
             endcase
