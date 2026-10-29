@@ -1,11 +1,3 @@
-// If we go for 24ms
-// Since clock running at 25.175 MHz, so count value till (24*10^-3)*(25.175*10^6) = 604,200
-// So we require 20-bit counter
-// 604_200d = 1001 0011 1000 0010 1000
-// 579_025d = 1000 1101 0101 1101 0001
-// Thus we can only check when upper 4-bits become 1001, that means we are checking somewhere between 23 to 24 ms
-// In this way we don't need 20-bit compartor, just 4-bit would work
-
 `default_nettype none
 
 module debouncer (
@@ -14,8 +6,7 @@ module debouncer (
     input wire btn,
     input wire vsync,
     input wire [2:0] enc_sel, // Select lines coming from 8:3 encoder so that if higher priority button is pressed then we restart the counter
-    output reg y,
-    output wire [2:0] held_sel // which button is being debounced, steady while the raw buttons bounce
+    output reg y
 );
 
     reg [1:0] ps, ns;
@@ -24,8 +15,6 @@ module debouncer (
     wire tick = vsync_reg & ~vsync;
     reg [2:0] sel_lines;
     localparam S0 = 2'd0, S1 = 2'd1, S2 = 2'd2, S3 = 2'd3;
-
-    assign held_sel = sel_lines;
     
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
@@ -201,7 +190,6 @@ module debounce_top(
     wire [2:0] pr_enc_out;
     wire mux_out;
     wire debounced_out;
-    wire [2:0] held_sel;
     
     d_ff ffs(
         .d(btns),
@@ -228,17 +216,15 @@ module debounce_top(
         .btn(mux_out),
         .vsync(vsync),
         .enc_sel(pr_enc_out),
-        .y(debounced_out),
-        .held_sel(held_sel)
+        .y(debounced_out)
     );
 
-    // decode from held_sel, not pr_enc_out: pr_enc_out follows the raw bouncing buttons,
-    // so during a bouncing release it would switch the output on and off many times
+    // Demux
     always @(*) begin
         s_rst = 1'b0;
         y = 4'd0;
         if(debounced_out) begin
-            case(held_sel)
+            case(pr_enc_out)
                 3'd0: s_rst = 1'b1;
                 3'd4: y = 4'b0001; // up
                 3'd5: y = 4'b0010; // left
