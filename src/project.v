@@ -74,6 +74,7 @@ module tt_um_2048 (
   debounce_top db(
       .clk(clk),
       .rst_n(rst_n),
+      .vsync(vsync),
       .btns(ui_in[4:0]),
       .s_rst(s_rst),
       .y(y)
