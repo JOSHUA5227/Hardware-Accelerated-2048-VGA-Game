@@ -38,7 +38,6 @@ module tt_um_2048 (
   wire _unused = &{ena, uio_in, ui_in[7:5], 1'b0};
 
   wire rand_val; //start enable signal for LFSR once all updates and shifting is done
-  wire [63:0] grid; // main playing grid 
   wire [3:0] rand_pos; // random posistion from LFSR
 
   wire [3:0] grid_value;
@@ -64,7 +63,7 @@ module tt_um_2048 (
     .video_active(video_active),
     .row(vga_row),
     .col(vga_col),
-    .grid(grid_value),
+    .value(grid_value),
     .won(game_win),
     .lost(game_loss),
     .R(R),
@@ -85,10 +84,10 @@ module tt_um_2048 (
     .rst_n(rst_n), // ACTIVE low Hard Reset
     .s_rst(s_rst), // ACTIVE high soft game reset
 
-    .U(y[0]),
-    .L(y[1]),
+    .U(y[3]),
     .D(y[2]),
-    .R(y[3]),
+    .L(y[1]),
+    .R(y[0]),
 
     .vga_col(vga_col),
     .vga_row(vga_row),
@@ -97,8 +96,8 @@ module tt_um_2048 (
     .tworfr(rand_val), //start enable signal for LFSR once all updates and shifting is done
     .rand_pos(rand_pos),// random posistion from LFSR
 
-    .gamewon(game_win),
-    .game_over_vga(game_loss)
+    .gamewon_vga(game_win),
+    .gamelost_vga(game_loss)
   );
 
   randomizer random(
