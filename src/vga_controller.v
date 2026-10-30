@@ -5,7 +5,7 @@ module vga_controller(
   input wire video_active, won, lost,
 
   input wire [3:0] value,
-  output [1:0] row,col,
+  output wire [1:0] row,col,
 
   output wire [1:0] R, G, B
 ); 
@@ -220,41 +220,47 @@ module vga_controller(
   };
 
     // Parameterized sizes
-  localparam BOARD_SIZE = 256;  // variable board size; preferable range 256 - 400
+  localparam BOARD_SIZE = 320;  // variable board size; preferable range 256 - 400
   localparam BOARD_X = (640 - BOARD_SIZE) / 2;
   localparam BOARD_Y = (480 - BOARD_SIZE) / 2;
+  localparam CELL_SIZE = BOARD_SIZE / 4;
 
   wire inside_board = (pix_x >= BOARD_X && pix_x < BOARD_X + BOARD_SIZE) &&
                       (pix_y >= BOARD_Y && pix_y < BOARD_Y + BOARD_SIZE);
 
-  wire [7:0] rel_x = pix_x[7:0] - BOARD_X[7:0];
-  wire [7:0] rel_y = pix_y[7:0] - BOARD_Y[7:0];
+  wire [9:0] rel_x = pix_x - BOARD_X;
+  wire [9:0] rel_y = pix_y - BOARD_Y;
 
-  assign col = rel_x[7:6];
-  assign row = rel_y[7:6];
+  assign col = 	rel_x >= (CELL_SIZE * 3) ? 2'b11 : 
+  				rel_x >= (CELL_SIZE * 2) ? 2'b10 :
+				rel_x >= CELL_SIZE ? 2'b01 : 2'b00;
 
-  wire [5:0] cell_x = rel_x[5:0];
-  wire [5:0] cell_y = rel_y[5:0];
+  assign row = 	rel_y >= (CELL_SIZE * 3) ? 2'b11 : 
+  				rel_y >= (CELL_SIZE * 2) ? 2'b10 :
+				rel_y >= CELL_SIZE ? 2'b01 : 2'b00;
 
-  wire center = (cell_x[5:1] == 5'd15) && (cell_y[5:1] == 5'd15);
+  wire [9:0] cell_x = rel_x % CELL_SIZE;
+  wire [9:0] cell_y = rel_y % CELL_SIZE;
 
-  wire is_large = (value >= 7);
+  wire center = (cell_x == CELL_SIZE/2 || cell_x == CELL_SIZE/2 - 1) 
+  && (cell_y == CELL_SIZE/2 || cell_y == CELL_SIZE/2 - 1);
 
-  wire in_y_range = (cell_y >= 16 && cell_y < 48);
-  wire in_x_range = is_large ? 1'b1 : (cell_x >= 16 && cell_x < 48);
+  wire is_large = (value >= 4'd7);
 
-  wire inside_text_box = in_y_range && in_x_range;
+  wire [9:0] offset_small = (CELL_SIZE - 10'd32) >> 1;
+  wire [9:0] offset_large = (CELL_SIZE - 10'd64) >> 1;
 
-  wire [5:0] cell_x_plus2  = cell_x + 6'd2;
+  wire [9:0] oy = offset_small;
+  wire [9:0] ox = is_large ? offset_large : offset_small;
+  wire [9:0] num_width = is_large ? 10'd64 : 10'd32;
 
-  wire [3:0] gy = cell_y[5:0] >= 6'd16 ? cell_y[4:1] - 4'd8 : 4'd0;
+  wire inside_text_box = (cell_x >= ox && cell_x < ox + num_width) && (cell_y >= oy && cell_y < oy + 9'd32);
 
-  wire [3:0] gx_small     = cell_x[5:0] >= 6'd16 ? cell_x[4:1] - 4'd8 : 4'd0;
-  wire [3:0] gx_large_std = cell_x[5:2];
-  wire [3:0] gx_large_off = cell_x_plus2[5:2] + (0*cell_x_plus2[1:0]); 
+  wire [9:0] gy = (cell_y - oy) >> 1;
+  wire [9:0] gx = is_large ? (cell_x - ox) >> 2 : (cell_x - ox) >> 1;
+  wire [7:0] bit_index = ~{gy[3:0], gx[3:0]};
 
-  wire [3:0] gx = is_large ? ((value == 4'd11) ? gx_large_off : gx_large_std) : gx_small;
-  wire [7:0] bit_index = ~{gy, gx};
+  wire unused = &{gx[9:4],gx[1:0],gy[9:4],gy[1:0],1'b0};
 
   reg glyph_pixel;
   always @(*) begin
@@ -278,17 +284,17 @@ module vga_controller(
 	always @(*) begin
       case (value)
         4'h0: bg_colour = center ? 6'b11_11_11 : 6'b01_01_01; // Empty
-        4'h1: bg_colour = 6'b11_00_00; // 2
-        4'h2: bg_colour = 6'b00_10_00; // 4
-        4'h3: bg_colour = 6'b11_11_01; // 8
-        4'h4: bg_colour = 6'b00_10_11; // 16
-        4'h5: bg_colour = 6'b10_01_11; // 32
-        4'h6: bg_colour = 6'b00_11_11; // 64
-        4'h7: bg_colour = 6'b11_01_01; // 128
-        4'h8: bg_colour = 6'b01_11_01; // 256
-        4'h9: bg_colour = 6'b11_10_00; // 512
-        4'hA: bg_colour = 6'b01_01_11; // 1024
-        4'hB: bg_colour = 6'b11_01_11; // 2048
+        4'h1: bg_colour = 6'b11_01_01; // 2
+        4'h2: bg_colour = 6'b11_10_01; // 4
+        4'h3: bg_colour = 6'b11_11_00; // 8
+        4'h4: bg_colour = 6'b00_11_11; // 16
+        4'h5: bg_colour = 6'b00_10_11; // 32
+        4'h6: bg_colour = 6'b00_11_10; // 64
+        4'h7: bg_colour = 6'b00_11_01; // 128
+        4'h8: bg_colour = 6'b11_01_00; // 256
+        4'h9: bg_colour = 6'b11_01_10; // 512
+        4'hA: bg_colour = 6'b10_01_11; // 1024
+        4'hB: bg_colour = 6'b11_00_01; // 2048
         default: bg_colour = center ? 6'b11_11_11 : 6'b01_01_01;
       endcase
 	end
@@ -298,10 +304,10 @@ module vga_controller(
 	reg [5:0] rgb;
 	always @(*) begin
 		if(video_active) begin
-		if(inside_board) rgb = tile_colour;
-		else rgb = won ? 6'b00_10_01 : (lost ? 6'b11_00_00 : 6'b00_00_00);
+			if(inside_board) rgb = tile_colour;
+			else rgb = won ? 6'b00_10_01 : (lost ? 6'b11_00_00 : 6'b00_00_00);
 		end else begin
-		rgb = 6'b00_00_00;
+			rgb = 6'b00_00_00;
 		end
 	end
  

@@ -1,11 +1,11 @@
 # Tiny Tapeout project information
 project:
-  title:        "Hardware-Accelerated-2048-VGA-Game"      # Project title
-  author:       "John Doe"      # Your name
-  discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "its the 2048 game"      # One line description of what your project does
+  title:        "Hardware-Accelerated-2048-VGA-Game"  # Project title
+  author:       "Joshua Ayush Tamil Uday"             # Your name
+  discord:      ""                    # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
+  description:  "its the 2048 game"   # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     25000000      # Clock frequency in Hz (or 0 if not applicable)
+  clock_hz:     25175000  # Clock frequency in Hz (or 0 if not applicable)
 
   # How many tiles your design occupies? A single tile is about 167x108 uM.
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
@@ -28,11 +28,11 @@ project:
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
+  ui[0]: "up"
+  ui[1]: "down"
+  ui[2]: "left"
+  ui[3]: "right"
+  ui[4]: "s_rst"
   ui[5]: ""
   ui[6]: ""
   ui[7]: ""
