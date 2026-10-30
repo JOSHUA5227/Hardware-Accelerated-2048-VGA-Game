@@ -1,4 +1,3 @@
-`default_nettype none
 
 module vga_controller(
   input wire [9:0] pix_x, pix_y,

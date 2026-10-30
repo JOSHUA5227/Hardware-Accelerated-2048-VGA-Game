@@ -3,33 +3,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-`default_nettype none
 
 module tt_um_2048 (
-    input  wire [7:0] ui_in,    // Dedicated inputs
-    output wire [7:0] uo_out,   // Dedicated outputs
-    input  wire [7:0] uio_in,   // IOs: Input path
-    output wire [7:0] uio_out,  // IOs: Output path
-    output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
-    input  wire       ena,      // always 1 when the design is powered, so you can ignore it
+    input  wire soft_rst,up,down,left,right,
     input  wire       clk,      // clock
-    input  wire       rst_n     // reset_n - low to reset
+    input  wire       rst_n,    // reset_n - low to reset
+    output  wire  [1:0] red,green,blue,
+    output  wire  hsync,vsync,
+    output wire video_active
 );
-
+      wire       ena;      // always 1 when the design is powered, so you can ignore it
+      assign ena = 1;
+      wire [7:0] ui_in;    // Dedicated inputs
+     wire [7:0] uo_out;   // Dedicated outputs
+      wire [7:0] uio_in;  // IOs: Input path
+     wire [7:0] uio_out;  // IOs: Output path
+     wire [7:0] uio_oe;   // IOs: Enable path (active high: 0=input, 1=output)
   // VGA signals
-  wire hsync;
-  wire vsync;
+ 
   wire [1:0] R;
   wire [1:0] G;
   wire [1:0] B;
-  wire video_active;
   wire [9:0] pix_x;
   wire [9:0] pix_y;
   wire [1:0] vga_row,vga_col;
-
+  wire s_rst;
+  assign red = R;
+  assign green = G;
+  assign blue = B;
   // TinyVGA PMOD
   assign uo_out = {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]};
 
+  assign ui_in = {3'd0,soft_rst,up,down,left,right};
   // Unused outputs assigned to 0.
   assign uio_out = 0;
   assign uio_oe  = 0;
@@ -44,7 +49,6 @@ module tt_um_2048 (
   wire game_win;
   wire game_loss;
 
-  wire s_rst;
   wire [3:0] y;
 
   hvsync_generator hvsync_gen(

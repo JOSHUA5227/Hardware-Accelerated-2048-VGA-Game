@@ -1,4 +1,3 @@
-`default_nettype none
 module update(
         input wire clk,
         input wire rst_n, // ACTIVE low Hard Reset
