@@ -230,17 +230,16 @@ module vga_controller(
 
   wire [9:0] rel_x = pix_x - BOARD_X;
   wire [9:0] rel_y = pix_y - BOARD_Y;
+  wire [9:0] cell_x;
+  wire [9:0] cell_y;
 
-  assign col = 	rel_x >= (CELL_SIZE * 3) ? 2'b11 : 
-  				rel_x >= (CELL_SIZE * 2) ? 2'b10 :
-				rel_x >= CELL_SIZE ? 2'b01 : 2'b00;
+  assign {cell_x, col} = 	rel_x >= (CELL_SIZE * 3) ? {rel_x - 10'd240, 2'b11} : 
+  							rel_x >= (CELL_SIZE * 2) ? {rel_x - 10'd160, 2'b10} :
+							rel_x >= CELL_SIZE ? {rel_x - 10'd80, 2'b01} : {rel_x, 2'b00};
 
-  assign row = 	rel_y >= (CELL_SIZE * 3) ? 2'b11 : 
-  				rel_y >= (CELL_SIZE * 2) ? 2'b10 :
-				rel_y >= CELL_SIZE ? 2'b01 : 2'b00;
-
-  wire [9:0] cell_x = rel_x % CELL_SIZE;
-  wire [9:0] cell_y = rel_y % CELL_SIZE;
+  assign {cell_y, row} = 	rel_y >= (CELL_SIZE * 3) ? {rel_y - 10'd240, 2'b11} : 
+  							rel_y >= (CELL_SIZE * 2) ? {rel_y - 10'd160, 2'b10} :
+							rel_y >= CELL_SIZE ? {rel_y - 10'd80, 2'b01} : {rel_y, 2'b00};
 
   wire center = (cell_x == CELL_SIZE/2 || cell_x == CELL_SIZE/2 - 1) 
   && (cell_y == CELL_SIZE/2 || cell_y == CELL_SIZE/2 - 1);
