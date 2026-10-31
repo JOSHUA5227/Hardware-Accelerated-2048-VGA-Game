@@ -3,7 +3,7 @@ project:
   title:        "Hardware-Accelerated-2048-VGA-Game"  # Project title
   author:       "Joshua Ayush Tamil Uday"             # Your name
   discord:      ""                    # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  "its the 2048 game"   # One line description of what your project does
+  description:  "2048 game with VGA output"   # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
   clock_hz:     25175000  # Clock frequency in Hz (or 0 if not applicable)
 
