@@ -36,7 +36,7 @@ assign F2_COL=F1_ROW;
 
 //frist version ==> not going with por start random logic
 // Ports to Adder/Comparator
-reg [3:0] A_comp1,A_comp2,A_add,B_comp1,B_comp2,B_add;
+reg [3:0] A_comp1,A_comp2,A_add,B_comp1,B_comp2;
 wire [3:0] res; // Addition result
 wire comp1_out,comp2_out;
 reg AorS;//1 is add and 0 is sub
@@ -54,7 +54,7 @@ EQ e2(
 
 Adder A1(
         .A(A_add),
-        .B(B_add),///seems always one so gonna remove it
+       // .B(B_add),///seems always one so gonna remove it
         .AorS(AorS),
         .OP(res)
 );
@@ -168,7 +168,7 @@ always@(*) begin//updater logic
         //defaults for comp and add
         AorS=1'b0;
         A_add=4'b0;
-        B_add=4'b0;
+        //B_add=4'b0;
         A_comp1=4'b0;
         A_comp2=4'b0;
         B_comp1=4'b0;
@@ -231,7 +231,7 @@ always@(*) begin//updater logic
                 2'b10:begin//not found it(zero) and not at end
                         stater=FINDZ;
                         A_add=colorrow?{2'b0,trav_rows}:{2'b0,trav_cols};
-                        B_add=4'b0001;
+                        //B_add=4'b0001;
                         AorS=plusone;
                         trav_colsr=colorrow?trav_cols:res[1:0];
                         trav_rowsr=colorrow?res[1:0]:trav_rows;
@@ -272,7 +272,7 @@ always@(*) begin//updater logic
                 2'b01:begin//companion found
                         stater=UPDATENOW;
                         A_add=grid_now;
-                        B_add=4'b0001;
+                        //B_add=4'b0001;
                         AorS=1'b1;//its always +1 for grid additions
                         update_to_grid=1'b1;
                         place_to_update=1'b0;//now
@@ -286,7 +286,7 @@ always@(*) begin//updater logic
                 2'b00:begin//end this iter cos non empty found but not equal retraverse on trav part to make that non zero be placed correctly
                         stater=FINDZ;
                         A_add=colorrow?{2'b0,now_rows}:{2'b0,now_cols};
-                        B_add=4'b0001;
+                        //B_add=4'b0001;
                         AorS=plusone;
                         trav_colsr=colorrow?now_cols:res[1:0];
                         trav_rowsr=colorrow?res[1:0]:now_rows;
@@ -310,7 +310,7 @@ always@(*) begin//updater logic
                 gamewonr=comp1_out;//if yes lets go;
 
                 A_add=colorrow?{2'b0,now_rows}:{2'b0,now_cols};
-                B_add=4'b0001;
+                //B_add=4'b0001;
                 AorS=plusone;
                 //at trav will be cleared here
                 game_overr=4'd0;//now cleared
@@ -340,7 +340,7 @@ always@(*) begin//updater logic
                 else begin//using trav cos its the usually checked ptr
                         if(comp1_out)begin//T F in notes genupdatet
                                 A_add=colorrow?{2'b0,trav_cols}:{2'b0,trav_rows};//as this is the genupdate it has to be oppposite
-                                B_add=4'b0001;
+                                //B_add=4'b0001;
                                 AorS=~plusone;//?1'b0:1'b1;//this time L or U means -1 and R D means +1
                                 now_colsr=colorrow?res[1:0]:(plusone?F1_COL:F2_COL);
                                 now_rowr=colorrow?(plusone?F2_ROW:F1_ROW):res[1:0];
@@ -351,7 +351,7 @@ always@(*) begin//updater logic
                         else begin//+1  //its not even at end or at dest so moving trav is better choice as from state 1 expects moving trav +1 and state 0 cant give a entry here
                                 stater=FINDCOMPANION;//state 1
                                 A_add=colorrow?{2'b0,trav_rows}:{2'b0,trav_cols};
-                                B_add=4'b0001;
+                                //B_add=4'b0001;
                                 AorS=plusone;
                                 trav_colsr=colorrow?trav_cols:res[1:0];
                                 trav_rowsr=colorrow?res[1:0]:trav_rows;
@@ -372,7 +372,7 @@ always@(*) begin//updater logic
                 B_comp2={now_rows,now_cols};
                 //+1 for state 4 +1 to give it to FINDCOMPANION
                 A_add=colorrow?{2'b0,trav_rows}:{2'b0,trav_cols};
-                B_add=4'b0001;
+                //B_add=4'b0001;
                 AorS=plusone;
                 stater=comp1_out?UPDATETRAV:FINDCOMPANION;//FINDCOMPANION needs that now!=trav ever
                 update_to_grid=~comp2_out;
@@ -441,7 +441,7 @@ always@(*) begin//updater logic
                 now_rowr=F1_ROW;
                 trav_colsr=F1_COL;
                 trav_rowsr=F1_ROW;
-        end        
+        end
         endcase
 
         end
@@ -460,17 +460,16 @@ endmodule
 
 module Adder(
     input wire [3:0]A,
-    input wire [3:0]B,
     input wire AorS,//1 is add 0 is substract
     output reg [3:0] OP
 );
 
 always@(*) begin
     if(AorS)begin
-        OP=A+B;
+        OP=A+4'b0001;
     end
     else begin
-        OP=A-B;
+        OP=A-4'b0001;
     end
 end
 
