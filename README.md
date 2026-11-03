@@ -28,31 +28,37 @@ Tiles are stored internally using a 4-bit exponent representation rather than th
 ## Demo
 
 ![Sequence](docs/images/TTO_2048_Sequence.png) 
+*Sequence*
 
 ![Gameplay](docs/images/TTO_2048_Gameplay.png) 
+*Gameplay*
 
-![Game-over state](docs/images/TTO_2048_Game_over.png) 
+![Game-over](docs/images/TTO_2048_Game_Over.png) 
+*Game Over*
 
 ## Architecture
 
-The design follows this high-level signal flow:
-
-
-The five game inputs (up, down, left, right, and soft reset) pass through the debouncer (priority given to soft reset, up, down, left , right). The game logic (`update.v` and `randomizer.v`) processes player input and updates the grid and win/loss status. The VGA logic (`vga_controller.v` and `hvsync_generator.v`) uses the grid and status signals to generate the displayed pixels and VGA synchronization signals.
+The five game inputs (up, down, left, right, and soft reset) pass through the debouncer (priority given in this order: soft reset, up, down, left , right). No new inputs will be accepted untill all buttons are deasserted. The game logic (`update.v` and `randomizer.v`) processes player input and updates the grid and win/loss status. The VGA logic (`vga_controller.v` and `hvsync_generator.v`) uses the grid and status signals to generate the displayed pixels and VGA synchronization signals.
 
 ![Complete Architecture](docs/images/TTO_2048_Architecture.png) 
+*Complete Architecture*
 
-![Complete Architecture](docs/images/TTO_2048_Debouncer.png) 
+[View the architecture diagram](https://drive.google.com/file/d/1NTIYlzZV2jmrTexMhQgzDGUUGLBoHh4L/view?usp=sharing)
 
-![Complete Architecture](docs/images/TTO_2048_Randomizer.png) 
+![Debouncer](docs/images/TTO_2048_Debouncer.png) 
+*Debouncer*
 
-![Complete Architecture](docs/images/TTO_2048_Update.png) 
+![Randomizer](docs/images/TTO_2048_Randomizer.png) 
+*Randomizer*
 
-![Complete Architecture](docs/images/TTO_2048_HVsync.png) 
+![Update](docs/images/TTO_2048_Update.png) 
+*Update Logic*
 
-![Complete Architecture](docs/images/TTO_2048_VGA.png) 
+![HVsync Generator](docs/images/TTO_2048_HVsync.png) 
+*HYsync Generator*
 
-[View the architecture diagram](https://drive.google.com/file/d/1NTIYlzZV2jmrTexMhQzgDGUUGLBoHh4L/view?usp=drive_link)
+![VGA Controller](docs/images/TTO_2048_VGA.png) 
+*VGA Controller*
 
 ### Main RTL blocks
 
