@@ -27,11 +27,11 @@ Tiles are stored internally using a 4-bit exponent representation rather than th
 
 ## Demo
 
-[Sequence](docs/images/TTO_2048_Sequence.png) 
+![Sequence](docs/images/TTO_2048_Sequence.png) 
 
-[Gameplay](docs/images/TTO_2048_Gameplay.png) 
+![Gameplay](docs/images/TTO_2048_Gameplay.png) 
 
-[Game-over state](docs/images/TTO_2048_Game_over.png) 
+![Game-over state](docs/images/TTO_2048_Game_over.png) 
 
 ## Architecture
 
@@ -40,17 +40,17 @@ The design follows this high-level signal flow:
 
 The five game inputs (up, down, left, right, and soft reset) pass through the debouncer (priority given to soft reset, up, down, left , right). The game logic (`update.v` and `randomizer.v`) processes player input and updates the grid and win/loss status. The VGA logic (`vga_controller.v` and `hvsync_generator.v`) uses the grid and status signals to generate the displayed pixels and VGA synchronization signals.
 
-[Complete Architecture](docs/images/TTO_2048_Architecture.png) 
+![Complete Architecture](docs/images/TTO_2048_Architecture.png) 
 
-[Complete Architecture](docs/images/TTO_2048_Debouncer.png) 
+![Complete Architecture](docs/images/TTO_2048_Debouncer.png) 
 
-[Complete Architecture](docs/images/TTO_2048_Randomizer.png) 
+![Complete Architecture](docs/images/TTO_2048_Randomizer.png) 
 
-[Complete Architecture](docs/images/TTO_2048_Update.png) 
+![Complete Architecture](docs/images/TTO_2048_Update.png) 
 
-[Complete Architecture](docs/images/TTO_2048_HVsync.png) 
+![Complete Architecture](docs/images/TTO_2048_HVsync.png) 
 
-[Complete Architecture](docs/images/TTO_2048_VGA.png) 
+![Complete Architecture](docs/images/TTO_2048_VGA.png) 
 
 [View the architecture diagram](https://drive.google.com/file/d/1NTIYlzZV2jmrTexMhQzgDGUUGLBoHh4L/view?usp=drive_link)
 
