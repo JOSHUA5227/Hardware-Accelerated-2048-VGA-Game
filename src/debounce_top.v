@@ -63,12 +63,12 @@ module debouncer (
             
             S2: begin
                 y = 1'b1;
-                if(btn == 0  || ((sel_lines != enc_sel))) ns = S3;
+                if(btn == 0) ns = S3;
             end
             
             S3: begin
                 y = 1'b1;
-                if(btn == 0 || (sel_lines != enc_sel)) begin
+                if(btn == 0) begin
                     if(tick) begin
                         if(count) begin
                             ns = S0;
