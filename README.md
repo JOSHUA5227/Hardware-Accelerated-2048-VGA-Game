@@ -45,6 +45,12 @@ Tiles are stored internally using a 4-bit exponent representation rather than th
   <em>Game over</em>
 </p>
 
+<p align="center">
+  <img src="docs/images/TTO_2048_Game_Win.png" alt="Game Over" width="700">
+  <br>
+  <em>Game win</em>
+</p>
+
 ## Architecture
 
 The five game inputs (up, down, left, right, and soft reset) pass through the debouncer (priority given in this order: soft reset, up, down, left , right). No new inputs will be accepted untill all buttons are deasserted. The game logic (`update.v` and `randomizer.v`) processes player input and updates the grid and win/loss status. The VGA logic (`vga_controller.v` and `hvsync_generator.v`) uses the grid and status signals to generate the displayed pixels and VGA synchronization signals.
@@ -86,6 +92,29 @@ The five game inputs (up, down, left, right, and soft reset) pass through the de
   <br>
   <em>VGA controller</em>
 </p>
+
+## Top-Level Interface
+
+### Input Ports
+
+| Signal | Purpose |
+|---|---|
+| `ui_in[7:5]` | Unused |
+| `ui_in[4:0]` | {soft reset, right, left, down, up} |
+| `uio_in[7:0]` | Unused |
+| `ena` | always 1 when the design is powered |
+| `clk` | clock - 25.175 MHz |
+| `rst_n` | active low reset |
+
+### Output Ports
+
+| Signal | Purpose |
+|---|---|
+| `uo_out[7:0]` |  {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]} |
+| `uio_out[7:0]` | Unused, tied to 0 |
+| `uio_oe[7:0]` | Unused, tied to 0 |
+
+
 ### Main RTL blocks
 
 | Module | Responsibility |
@@ -103,7 +132,7 @@ The five game inputs (up, down, left, right, and soft reset) pass through the de
 3. Priority Order - (Soft Reset, Up, Down, Left, Right)
 4. A directional input starts a game update. The FSM uses the `now` pointer to identify the destination cell and the `trav` pointer to scan the row or column for tiles to move or merge.
 5. The shared comparators check for empty cells, matching tiles, pointer boundaries, and the win condition. The shared adder/subtractor advances pointers or increments a tile's exponent during a merge.
-6. The grid is updated when the FSM asserts the grid-write control. If the move changes the board, a new random tile is inserted into an empty location.
+6. The grid is updated when the FSM asserts the grid-write control. If the move changes the board, a new random tile is inserted into an empty location (10% probability for 4, 90% probability for 2).
 7. The VGA controller reads the grid and renders the game. A green border indicates a win, and a red border indicates a loss.
 
 After power-on or a hard reset, the grid is cleared. Once `rst_n` is released, the VGA display becomes active and shows the empty grid. Press the soft reset button to start a game and insert the first random tile. Use the directional buttons to play.
@@ -144,8 +173,4 @@ After power-on or a hard reset, the grid is cleared. Once `rst_n` is released, t
 | Joshua Quinthino Albuquerque | [@JOSHUA5227](https://github.com/JOSHUA5227) | Streamlined Architecture + Alternative Game Logic + FPGA |
 | Tamil Selvan| [@VERYsmallBOI](https://github.com/VERYsmallBOI) | Streamlined Architecture + Final Game Logic + Randomizer |
 | Neti Udaya Karthikeya | [@karthikeyaneti](https://github.com/karthikeyaneti) | VGA Logic + Integration |
-
-## License
-
-<!-- Add the selected project license here, or remove this section if the project is not licensed for redistribution. -->
 
