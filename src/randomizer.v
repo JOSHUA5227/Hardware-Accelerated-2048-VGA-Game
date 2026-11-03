@@ -1,8 +1,8 @@
 module randomizer(
     input wire clk,
     input wire rst_n,//active now reset
-    output [3:0] rand_pos,//[place to insert]
-    output rand_val//0 for insertinig a 2 and 1 for inserting a 4
+    output wire [3:0] rand_pos,//[place to insert]
+    output wire rand_val//0 for insertinig a 2 and 1 for inserting a 4
 );
 
 /*

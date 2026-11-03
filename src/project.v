@@ -45,10 +45,10 @@ module tt_um_2048 (
 
   wire s_rst;
   wire [3:0] y;
-
+  wire rst_ns;//reset sync out
   hvsync_generator hvsync_gen(
     .clk(clk),
-    .reset(~rst_n),
+    .reset(~rst_ns),
     .hsync(hsync),
     .vsync(vsync),
     .display_on(video_active),
@@ -72,7 +72,7 @@ module tt_um_2048 (
 
   debounce_top db(
       .clk(clk),
-      .rst_n(rst_n),
+      .rst_n(rst_ns),
       //using vsync for checking temporal stability of input given
       .vsync(vsync),
       .btns(ui_in[4:0]), // {s_rst, right, left, down, up}
@@ -82,7 +82,7 @@ module tt_um_2048 (
 
   update u_grid_core(
     .clk(clk),
-    .rst_n(rst_n), // ACTIVE low Hard Reset
+    .rst_n(rst_ns), // ACTIVE low Hard Reset
     .s_rst(s_rst), // ACTIVE high soft game reset
     //directions
     .U(y[3]),
@@ -103,8 +103,13 @@ module tt_um_2048 (
 
   randomizer random(
     .clk(clk),
-    .rst_n(rst_n),
+    .rst_n(rst_ns),
     .rand_pos(rand_pos),
     .rand_val(rand_val)
+  );
+  reset_sync rs1(
+    .in_rst(rst_n),
+    .out_rst(rst_ns),
+    .clk(clk)
   );
 endmodule

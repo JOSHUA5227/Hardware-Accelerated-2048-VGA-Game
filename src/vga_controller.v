@@ -5,7 +5,7 @@ module vga_controller(
   input wire video_active, won, lost,
 
   input wire [3:0] value,
-  output [1:0] row,col,
+  output wire [1:0] row,col,
 
   output wire [1:0] R, G, B
 ); 
