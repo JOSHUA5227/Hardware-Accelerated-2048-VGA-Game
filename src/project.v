@@ -6,8 +6,8 @@
 `default_nettype none
 
 module tt_um_2048 (
-    input  wire [7:0] ui_in,    // Dedicated inputs
-    output wire [7:0] uo_out,   // Dedicated outputs
+    input  wire [7:0] ui_in,    // Dedicated inputs: ui_in[7:5] -> unused, ui_in[4:0] -> {s_rst, right, left, down, up}
+    output wire [7:0] uo_out,   // Dedicated outputs: uo_out[7:0] -> {hsync, B[0], G[0], R[0], vsync, B[1], G[1], R[1]}
     input  wire [7:0] uio_in,   // IOs: Input path
     output wire [7:0] uio_out,  // IOs: Output path
     output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
@@ -75,7 +75,7 @@ module tt_um_2048 (
       .rst_n(rst_n),
       //using vsync for checking temporal stability of input given
       .vsync(vsync),
-      .btns(ui_in[4:0]),
+      .btns(ui_in[4:0]), // {s_rst, right, left, down, up}
       .s_rst(s_rst),
       .y(y)
   );

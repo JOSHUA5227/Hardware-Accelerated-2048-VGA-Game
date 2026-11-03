@@ -5,7 +5,7 @@ module debouncer (
     input wire rst_n,
     input wire btn,
     input wire vsync,
-    input wire [2:0] enc_sel, // Select lines coming from 8:3 encoder so that if higher priority button is pressed then we restart the counter
+    input wire [2:0] enc_sel, // Select lines coming from 8:3 encoder
     output reg y,
     output reg [2:0] sel_lines
 );
@@ -95,26 +95,26 @@ module debouncer (
 endmodule
 
 module priority_encoder(
-    // s_rst > up > down > left > right
+    // s_rst > right > left > down > up
     input wire [7:0]i,
     output reg [2:0]y
 );
 
     always @(*) begin
-        // s_rst for i[7], in any of the rest cases trigger s_rst too
+        // s_rst for i[7]
         if (i[7]) begin
             y = 3'd0;
         end
-        else if(i[6]) begin
+        else if (i[6]) begin
             y = 3'd1;
         end
-        else if(i[5]) begin
+        else if (i[5]) begin
             y = 3'd2;
         end
-        else if(i[4]) begin
+        else if (i[4]) begin
             y = 3'd3;
         end
-        // up
+        // right
         else if (i[3]) begin
             y = 3'd4;
         end 
@@ -126,7 +126,7 @@ module priority_encoder(
         else if (i[1]) begin
             y = 3'd6;
         end
-        // right
+        // up
         else if (i[0]) begin
             y = 3'd7;
         end
@@ -138,9 +138,9 @@ module priority_encoder(
 endmodule
 
 module mux(
-    input wire [3:0]btns,
     input wire s_rst,
-    input wire [2:0]sel,
+    input wire [3:0] btns,
+    input wire [2:0] sel,
     output wire y
 );
     reg button_selected;
@@ -160,11 +160,11 @@ module mux(
 endmodule
 
 module d_ff(
-    input wire [4:0]d,
     input wire clk, rst_n,
-    output reg [4:0]q
+    input wire [4:0] d,
+    output reg [4:0] q
 );
-    reg [4:0]q_sync;
+    reg [4:0] q_sync;
     
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
@@ -228,10 +228,10 @@ module debounce_top(
         if(debounced_out) begin
             case(sel_lines)
                 3'd0: s_rst = 1'b1;
-                3'd4: y = 4'b0001; // up
+                3'd4: y = 4'b0001; // right
                 3'd5: y = 4'b0010; // left
                 3'd6: y = 4'b0100; // down
-                3'd7: y = 4'b1000; // right
+                3'd7: y = 4'b1000; // up
                 default: begin
                     s_rst = 1'b0;
                     y = 4'd0;

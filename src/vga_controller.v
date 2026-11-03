@@ -10,6 +10,7 @@ module vga_controller(
   output wire [1:0] R, G, B
 ); 
 
+	// localparams for the number glyphs (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, and 2048)
   localparam [255:0] TILE_2 = {
         16'b0000000000000000,
         16'b0000000000000000,
@@ -219,92 +220,99 @@ module vga_controller(
         16'b0000000000000000
   };
 
-    // Parameterized sizes
-  localparam BOARD_SIZE = 256;  // variable board size; preferable range 256 - 400
-  localparam BOARD_X = (640 - BOARD_SIZE) / 2;
-  localparam BOARD_Y = (480 - BOARD_SIZE) / 2;
+  localparam BOARD_SIZE = 256; // 256x256 board with 64x64 cell size
+  localparam BOARD_X = (640 - BOARD_SIZE) / 2;  // Starting X-Coordinate of the board 
+  localparam BOARD_Y = (480 - BOARD_SIZE) / 2;  // Starting Y-Coordinate of the board
 
   wire inside_board = (pix_x >= BOARD_X && pix_x < BOARD_X + BOARD_SIZE) &&
                       (pix_y >= BOARD_Y && pix_y < BOARD_Y + BOARD_SIZE);
 
-  wire [7:0] rel_x = pix_x[7:0] - BOARD_X[7:0];
-  wire [7:0] rel_y = pix_y[7:0] - BOARD_Y[7:0];
+  wire [7:0] rel_x = pix_x[7:0] - BOARD_X[7:0];       // relative X-Coordinate with respect to the board
+  wire [7:0] rel_y = pix_y[7:0] - BOARD_Y[7:0];       // relative Y-Coordinate with respect to the board
 
-  assign col = rel_x[7:6];
-  assign row = rel_y[7:6];
+  // {row, col are also sent as output to retrieve the value of each cell from update logic}
+  assign col = rel_x[7:6];    // current column
+  assign row = rel_y[7:6];    // current row
 
-  wire [5:0] cell_x = rel_x[5:0];
-  wire [5:0] cell_y = rel_y[5:0];
+  wire [5:0] cell_x = rel_x[5:0];   // relative X-Coordinate within the current cell
+  wire [5:0] cell_y = rel_y[5:0];   // relative Y-Coordinate within the current cell
 
-  wire center = (cell_x[5:1] == 5'd15) && (cell_y[5:1] == 5'd15);
+  wire center = (cell_x[5:1] == 5'd15) && (cell_y[5:1] == 5'd15); // high when cell_x and cell_y are at the center of the cell
 
-  wire is_large = (value >= 7);
+  wire is_large = (value >= 7);     // indicates that the current tile's value is a 3 or 4 digit number (128, 256, 512, 1024, 2048)
 
   wire in_y_range = (cell_y >= 16 && cell_y < 48);
   wire in_x_range = is_large ? 1'b1 : (cell_x >= 16 && cell_x < 48);
 
-  wire inside_text_box = in_y_range && in_x_range;
+  wire inside_text_box = in_y_range && in_x_range;	// indicates that the cell_y and cell_x lie in the text box region of the cell
 
-  wire [5:0] cell_x_plus2  = cell_x + 6'd2;
+  wire [5:0] cell_x_plus2  = cell_x + 6'd2;	// extra offset specially for the glyph 2048 to center it within the tile 
 
-  wire [3:0] gy = cell_y[5:0] >= 6'd16 ? cell_y[4:1] - 4'd8 : 4'd0;
+  wire [3:0] gy = cell_y[5:0] >= 6'd16 ? cell_y[4:1] - 4'd8 : 4'd0;	// y index of the glyph 
 
-  wire [3:0] gx_small     = cell_x[5:0] >= 6'd16 ? cell_x[4:1] - 4'd8 : 4'd0;
-  wire [3:0] gx_large_std = cell_x[5:2];
-  wire [3:0] gx_large_off = cell_x_plus2[5:2] + (0*cell_x_plus2[1:0]); 
+  wire [3:0] gx_small     = cell_x[5:0] >= 6'd16 ? cell_x[4:1] - 4'd8 : 4'd0;	// x index of the small number glyphs
+  wire [3:0] gx_large_std = cell_x[5:2];		// x index of large number glyphs (128, 256, 512, 1024, 2048)
+  wire [3:0] gx_large_off = cell_x_plus2[5:2];	// x index of 2048 number glyph
 
+  wire _unused = &{cell_x_plus2[1:0], 1'b0};	// unused bits
+
+	// select appropriate x index for the glyph depending on the tile value
   wire [3:0] gx = is_large ? ((value == 4'd11) ? gx_large_off : gx_large_std) : gx_small;
-  wire [7:0] bit_index = ~{gy, gx};
+  wire [7:0] bit_index = ~{gy, gx};	// flattened index for the flat vector glyphs
 
-  reg glyph_pixel;
-  always @(*) begin
-    case (value)
-      4'h1: glyph_pixel = TILE_2[bit_index];
-      4'h2: glyph_pixel = TILE_4[bit_index];
-      4'h3: glyph_pixel = TILE_8[bit_index];
-      4'h4: glyph_pixel = TILE_16[bit_index];
-      4'h5: glyph_pixel = TILE_32[bit_index];
-      4'h6: glyph_pixel = TILE_64[bit_index];
-      4'h7: glyph_pixel = TILE_128[bit_index];
-      4'h8: glyph_pixel = TILE_256[bit_index];
-      4'h9: glyph_pixel = TILE_512[bit_index];
-      4'hA: glyph_pixel = TILE_1024[bit_index];
-      4'hB: glyph_pixel = TILE_2048[bit_index];
-      default: glyph_pixel = 1'b0;
-    endcase
-  end
-
-	reg [5:0] bg_colour;
+	// selects the glyphs according to the tile value and the bit within the glyph as specified by the bit_index  
+	reg glyph_pixel;
 	always @(*) begin
-      case (value)
-        4'h0: bg_colour = center ? 6'b11_11_11 : 6'b01_01_01; // Empty
-        4'h1: bg_colour = 6'b11_01_01; // 2
-        4'h2: bg_colour = 6'b11_10_01; // 4
-        4'h3: bg_colour = 6'b11_11_01; // 8
-        4'h4: bg_colour = 6'b00_11_11; // 16
-        4'h5: bg_colour = 6'b00_10_11; // 32
-        4'h6: bg_colour = 6'b00_11_10; // 64
-        4'h7: bg_colour = 6'b00_11_01; // 128
-        4'h8: bg_colour = 6'b11_01_00; // 256
-        4'h9: bg_colour = 6'b11_01_10; // 512
-        4'hA: bg_colour = 6'b10_01_11; // 1024
-        4'hB: bg_colour = 6'b11_00_01; // 2048
-        default: bg_colour = center ? 6'b11_11_11 : 6'b01_01_01;
-      endcase
+		case (value)
+		4'h1: glyph_pixel = TILE_2[bit_index];
+		4'h2: glyph_pixel = TILE_4[bit_index];
+		4'h3: glyph_pixel = TILE_8[bit_index];
+		4'h4: glyph_pixel = TILE_16[bit_index];
+		4'h5: glyph_pixel = TILE_32[bit_index];
+		4'h6: glyph_pixel = TILE_64[bit_index];
+		4'h7: glyph_pixel = TILE_128[bit_index];
+		4'h8: glyph_pixel = TILE_256[bit_index];
+		4'h9: glyph_pixel = TILE_512[bit_index];
+		4'hA: glyph_pixel = TILE_1024[bit_index];
+		4'hB: glyph_pixel = TILE_2048[bit_index];
+		default: glyph_pixel = 1'b0;
+		endcase
 	end
 
-	wire [5:0] tile_colour = (inside_text_box && glyph_pixel) ? 6'b00_00_00 : bg_colour;
+	// Predefined background colours for each non-zero tile
+	reg [5:0] bg_colour;
+	always @(*) begin
+		case (value)
+		4'h0: bg_colour = center ? 6'b11_11_11 : 6'b01_01_01; // Empty
+		4'h1: bg_colour = 6'b11_01_01; // 2
+		4'h2: bg_colour = 6'b11_10_01; // 4
+		4'h3: bg_colour = 6'b11_11_01; // 8
+		4'h4: bg_colour = 6'b00_11_11; // 16
+		4'h5: bg_colour = 6'b00_10_11; // 32
+		4'h6: bg_colour = 6'b00_11_10; // 64
+		4'h7: bg_colour = 6'b00_11_01; // 128
+		4'h8: bg_colour = 6'b11_01_00; // 256
+		4'h9: bg_colour = 6'b11_01_10; // 512
+		4'hA: bg_colour = 6'b10_01_11; // 1024
+		4'hB: bg_colour = 6'b11_00_01; // 2048
+		default: bg_colour = center ? 6'b11_11_11 : 6'b01_01_01;
+		endcase
+	end
+
+	wire [5:0] tile_colour = (inside_text_box && glyph_pixel) ? 6'b00_00_00 : bg_colour;	// black for text, else bg_colour
 
 	reg [5:0] rgb;
 	always @(*) begin
 		if(video_active) begin
-		if(inside_board) rgb = tile_colour;
-		else rgb = won ? 6'b00_10_01 : (lost ? 6'b11_00_00 : 6'b00_00_00);
+			// display the appropriate colors within the board
+			if(inside_board) rgb = tile_colour;
+			// display green everywhere around the board if the game is won, red if lost, and black if neither has occurred.
+			else rgb = won ? 6'b00_10_01 : (lost ? 6'b11_00_00 : 6'b00_00_00);
 		end else begin
-		rgb = 6'b00_00_00;
+			rgb = 6'b00_00_00;
 		end
 	end
- 
-	assign {R, G, B} = rgb;
+
+	assign {R, G, B} = rgb;	// outputs
 
 endmodule
