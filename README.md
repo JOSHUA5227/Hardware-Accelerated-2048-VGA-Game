@@ -100,7 +100,7 @@ The five game inputs (up, down, left, right, and soft reset) pass through the de
 | Signal | Purpose |
 |---|---|
 | `ui_in[7:5]` | Unused |
-| `ui_in[4:0]` | {soft reset, right, left, down, up} |
+| `ui_in[4:0]` | {soft_reset, right, left, down, up} |
 | `uio_in[7:0]` | Unused |
 | `ena` | always 1 when the design is powered |
 | `clk` | clock - 25.175 MHz |
@@ -119,11 +119,11 @@ The five game inputs (up, down, left, right, and soft reset) pass through the de
 
 | Module | Responsibility |
 |---|---|
-| `debounce_top.v` | Debounces the five game buttons before they are used by the game logic. |
-| `update.v` | Implements the game FSM, grid updates, tile movement and merging, and win/loss detection. |
-| `randomizer.v` | Generates pseudorandom tile positions and supports random tile insertion. |
-| `vga_controller.v` | Reads the game grid and generates the pixel colour output, including the win/loss border. |
-| `hvsync_generator.v` | Generates horizontal and vertical VGA synchronization and pixel-coordinate timing. |
+| [`debounce_top.v`](src/debounce_top.v) | Debounces the five game buttons before they are used by the game logic. |
+| [`update.v`](src/update.v) | Implements the game FSM, grid updates, tile movement and merging, and win/loss detection. |
+| [`randomizer.v`](src/randomizer.v) | Generates pseudorandom tile positions and supports random tile insertion. |
+| [`vga_controller.v`](src/vga_controller.v) | Reads the game grid and generates the pixel colour output, including the win/loss border. |
+| [`hvsync_generator.v`](hysync_generator.v) | Generates horizontal and vertical VGA synchronization and pixel-coordinate timing. |
 
 ## How It Works
 
