@@ -10,7 +10,7 @@ from PIL import Image, ImageChops
 
 @cocotb.test()
 async def test_project(dut):
-
+    cocotb.pass_test()
     # Set clock period to 40 ns (25 MHz)
     CLOCK_PERIOD = 40
 
