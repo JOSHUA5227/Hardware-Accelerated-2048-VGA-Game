@@ -1,3 +1,4 @@
+![](../../workflows/gds/badge.svg) ![](../../workflows/docs/badge.svg) ![](../../workflows/test/badge.svg) ![](../../workflows/fpga/badge.svg)
 # Hardware-Accelerated-2048-VGA-Game
 
 A hardware implementation of the classic **2048 puzzle game**, with game logic implemented in RTL and real-time video output through a VGA display.
