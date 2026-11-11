@@ -307,7 +307,7 @@ always@(*) begin//updater logic
                 //is it 11 check
                 A_comp1=grid_now;
                 B_comp1=ENDMOVE;
-                gamewonr=comp1_out;//if yes lets go;
+                gamewonr=comp1_out|gamewon;//if yes lets go;
 
                 A_add=colorrow?{2'b0,now_rows}:{2'b0,now_cols};
                 //B_add=4'b0001;
@@ -317,8 +317,8 @@ always@(*) begin//updater logic
                 update_to_grid=1'b1;//its entry 
                 place_to_update=1'b1;//trav
                 value_to_update=4'd0;//clear it
-                now_colsr=comp1_out?F1_COL:(colorrow?now_cols:res[1:0]);
-                now_rowr=comp1_out?F1_ROW:(colorrow?res[1:0]:now_rows);
+                now_colsr=(colorrow?now_cols:res[1:0]);
+                now_rowr=(colorrow?res[1:0]:now_rows);
                 trav_colsr=now_colsr;
                 trav_rowsr=now_rowr;
         end
