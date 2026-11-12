@@ -57,7 +57,7 @@ async def test_project(dut):
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 2)
+    await ClockCycles(dut.clk, 4)   # Wait for synchronized reset deassertion
 
     # Define some functions for capturing lines & frames
 
