@@ -10,7 +10,7 @@ from PIL import Image, ImageChops
 
 @cocotb.test()
 async def test_project(dut):
-    cocotb.pass_test()
+
     # Set clock period to 40 ns (25 MHz)
     CLOCK_PERIOD = 40
 
@@ -57,7 +57,7 @@ async def test_project(dut):
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 10)
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 2)
+    await ClockCycles(dut.clk, 4)   # Wait for synchronized reset deassertion
 
     # Define some functions for capturing lines & frames
 
